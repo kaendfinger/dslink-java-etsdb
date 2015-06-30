@@ -17,10 +17,13 @@ public class TimeParser {
     public static long parse(String time) {
         try {
             if (time.matches(".+[+|-]\\d+:\\d+")) {
-                time = time.replaceAll("\\+0([0-9]):00", "+0$100");
+                StringBuilder b = new StringBuilder(time);
+                b.deleteCharAt(time.lastIndexOf(":"));
+                time = b.toString();
                 return FORMAT_TIME_ZONE.get().parse(time).getTime();
             } else {
-                return FORMAT.get().parse(time).getTime();
+                throw new UnsupportedOperationException(); // DEBUG
+                //return FORMAT.get().parse(time).getTime();
             }
         } catch (ParseException e) {
             throw new RuntimeException(e);
