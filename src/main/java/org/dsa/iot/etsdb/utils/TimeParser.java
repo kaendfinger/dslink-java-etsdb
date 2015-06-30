@@ -13,6 +13,7 @@ public class TimeParser {
 
     private static final ThreadLocal<DateFormat> FORMAT_TIME_ZONE;
     private static final ThreadLocal<DateFormat> FORMAT;
+    private static final String TIME_ZONE;
 
     public static long parse(String time) {
         try {
@@ -20,11 +21,10 @@ public class TimeParser {
                 StringBuilder b = new StringBuilder(time);
                 b.deleteCharAt(time.lastIndexOf(":"));
                 time = b.toString();
-                return FORMAT_TIME_ZONE.get().parse(time).getTime();
             } else {
-                throw new UnsupportedOperationException(); // DEBUG
-                //return FORMAT.get().parse(time).getTime();
+                time += TIME_ZONE;
             }
+            return FORMAT_TIME_ZONE.get().parse(time).getTime();
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
@@ -52,5 +52,16 @@ public class TimeParser {
                 return sdf;
             }
         };
+
+        long currentTime = new Date().getTime();
+        int offset = TimeZone.getDefault().getOffset(currentTime) / (1000 * 60);
+        String s = "+";
+        if (offset < 0) {
+            offset = -offset;
+            s = "-";
+        }
+        int hh = offset / 60;
+        int mm = offset % 60;
+        TIME_ZONE = s + (hh < 10 ? "0" : "") + hh + (mm < 10 ? "0" : "") + mm;
     }
 }
