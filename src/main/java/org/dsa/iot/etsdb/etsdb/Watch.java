@@ -93,7 +93,7 @@ public class Watch implements Handler<SubscriptionValue> {
         dataNode.setValue(value);
         realTimeNode.setValue(value);
 
-        LOGGER.info("Received update for {} of {}", path, sValue);
+        LOGGER.debug("Received update for {} of {}", path, sValue);
         long time = TimeParser.parse(event.getTimestamp());
         getGroup().write(new PathValuePair(this, path, value, time));
     }

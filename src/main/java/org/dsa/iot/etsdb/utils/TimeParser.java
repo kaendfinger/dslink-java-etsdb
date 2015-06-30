@@ -11,21 +11,36 @@ import java.util.TimeZone;
  */
 public class TimeParser {
 
+    private static final ThreadLocal<DateFormat> FORMAT_TIME_ZONE;
     private static final ThreadLocal<DateFormat> FORMAT;
 
     public static long parse(String time) {
         try {
-            return FORMAT.get().parse(time).getTime();
+            if (time.matches(".+[+|-]\\d+:\\d+")) {
+                time = time.replaceAll("\\+0([0-9]):00", "+0$100");
+                return FORMAT_TIME_ZONE.get().parse(time).getTime();
+            } else {
+                return FORMAT.get().parse(time).getTime();
+            }
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }
 
     public static String parse(long time) {
-        return FORMAT.get().format(new Date(time));
+        return FORMAT.get().format(new Date(time)) + "-00:00";
     }
 
     static {
+        FORMAT_TIME_ZONE = new ThreadLocal<DateFormat>() {
+            @Override
+            protected DateFormat initialValue() {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                return sdf;
+            }
+        };
+
         FORMAT = new ThreadLocal<DateFormat>() {
             @Override
             protected DateFormat initialValue() {

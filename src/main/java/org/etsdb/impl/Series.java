@@ -30,7 +30,7 @@ class Series<T> {
     Series(DatabaseImpl<T> db, File baseDir, String id, Serializer<T> serializer) {
         this.db = db;
         seriesDir = Utils.getSeriesDir(baseDir, id);
-        if (!seriesDir.mkdirs()) {
+        if (!(seriesDir.exists() || seriesDir.mkdirs())) {
             logger.error("Failed to create seriesDir: {}", seriesDir.getPath());
         }
         this.id = id;
