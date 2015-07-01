@@ -241,18 +241,18 @@ public class WatchGroup {
             NodeBuilder builder = watchGroup.createChild("loggingType");
             builder.setDisplayName("Logging Type");
             {
-                Set<String> enums = new LinkedHashSet<>();
+                Set<String> enums;
                 Node node = watchGroup.getChild("loggingType");
                 if (node != null) {
-                    enums.add(node.getValue().getString());
+                    enums = buildLoggingEnums(node.getValue().getString());
+                    node.setValueType(ValueType.makeEnum(enums));
+                } else {
+                    String type = LoggingType.ALL_DATA.getName();
+                    enums = buildLoggingEnums(type);
+                    builder.setValue(new Value(type));
+                    builder.setValueType(ValueType.makeEnum(enums));
                 }
-                for (LoggingType t : LoggingType.values()) {
-                    if (!enums.contains(t.getName())) {
-                        enums.add(t.getName());
-                    }
-                }
-                builder.setValueType(ValueType.makeEnum(enums));
-                builder.setValue(new Value(LoggingType.ALL_DATA.getName()));
+
                 builder.setWritable(Writable.WRITE);
                 builder.getListener().setValueHandler(new Handler<ValuePair>() {
                     @Override
@@ -262,13 +262,7 @@ public class WatchGroup {
                         setupLoggingType(type);
 
                         Node node = watchGroup.getChild("loggingType");
-                        Set<String> enums = new LinkedHashSet<>();
-                        enums.add(sType);
-                        for (LoggingType t : LoggingType.values()) {
-                            if (!enums.contains(t.getName())) {
-                                enums.add(t.getName());
-                            }
-                        }
+                        Set<String> enums = buildLoggingEnums(sType);
                         node.setValueType(ValueType.makeEnum(enums));
                     }
                 });
@@ -361,5 +355,16 @@ public class WatchGroup {
         Value value = pair.getValue();
         long time = value.getDate().getTime();
         db.write(path, time, value);
+    }
+
+    private static Set<String> buildLoggingEnums(String newType) {
+        Set<String> enums = new LinkedHashSet<>();
+        enums.add(newType);
+        for (LoggingType t : LoggingType.values()) {
+            if (!enums.contains(t.getName())) {
+                enums.add(t.getName());
+            }
+        }
+        return enums;
     }
 }
