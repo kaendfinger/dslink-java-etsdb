@@ -242,8 +242,14 @@ public class WatchGroup {
             builder.setDisplayName("Logging Type");
             {
                 Set<String> enums = new LinkedHashSet<>();
+                Node node = watchGroup.getChild("loggingType");
+                if (node != null) {
+                    enums.add(node.getValue().getString());
+                }
                 for (LoggingType t : LoggingType.values()) {
-                    enums.add(t.getName());
+                    if (!enums.contains(t.getName())) {
+                        enums.add(t.getName());
+                    }
                 }
                 builder.setValueType(ValueType.makeEnum(enums));
                 builder.setValue(new Value(LoggingType.ALL_DATA.getName()));
@@ -254,6 +260,16 @@ public class WatchGroup {
                         String sType = event.getCurrent().getString();
                         LoggingType type = LoggingType.toEnum(sType);
                         setupLoggingType(type);
+
+                        Node node = watchGroup.getChild("loggingType");
+                        Set<String> enums = new LinkedHashSet<>();
+                        enums.add(sType);
+                        for (LoggingType t : LoggingType.values()) {
+                            if (!enums.contains(t.getName())) {
+                                enums.add(t.getName());
+                            }
+                        }
+                        node.setValueType(ValueType.makeEnum(enums));
                     }
                 });
             }
