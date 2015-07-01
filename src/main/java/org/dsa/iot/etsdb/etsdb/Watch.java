@@ -143,7 +143,10 @@ public class Watch implements Handler<SubscriptionValue> {
         lastWrittenNode.setDisplayName("Last Written Value");
     }
 
-    private void initStartValue() {
+    protected void initStartValue() {
+        if (startNode.getValue() != null) {
+            return;
+        }
         startNode.setValueType(ValueType.TIME);
         startNode.setDisplayName("Start Date");
 

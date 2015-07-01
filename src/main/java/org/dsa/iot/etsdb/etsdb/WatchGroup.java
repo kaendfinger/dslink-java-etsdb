@@ -119,6 +119,7 @@ public class WatchGroup {
                 Value value = new Value(TimeParser.parse(pair.getTime()));
                 watch.setEndDate(value);
                 watch.setLastWrittenValue(pair.getValue());
+                watch.initStartValue();
                 return;
             }
             queue.add(pair);
@@ -288,6 +289,7 @@ public class WatchGroup {
                         if (pair != null) {
                             Watch watch = pair.getWatch();
                             Value value = pair.getValue();
+                            watch.initStartValue();
                             watch.setLastWrittenValue(value);
 
                             Date date = value.getDate();
