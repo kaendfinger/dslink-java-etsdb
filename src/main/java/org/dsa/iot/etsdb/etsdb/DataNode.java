@@ -32,7 +32,7 @@ public class DataNode {
         node.setValueType(ValueType.DYNAMIC);
 
         {
-            NodeBuilder b = node.createChild("getHistory_", "getHistory_");
+            NodeBuilder b = node.createChild("getHistory", "getHistory_");
             b.setAction(GetHistory.make(parent, b.getChild(), group.getDb()));
             b.build();
         }
