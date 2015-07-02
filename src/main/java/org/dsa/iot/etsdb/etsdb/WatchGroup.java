@@ -215,7 +215,7 @@ public class WatchGroup {
     private void initSettings() {
         {
             NodeBuilder builder = watchGroup.createChild("writeTime");
-            builder.setDisplayName("Write Time");
+            builder.setDisplayName("Buffer Flush Time");
             builder.setValueType(ValueType.NUMBER);
             builder.setValue(new Value(5));
             builder.setWritable(Writable.WRITE);
@@ -249,8 +249,8 @@ public class WatchGroup {
                 } else {
                     String type = LoggingType.ALL_DATA.getName();
                     enums = buildLoggingEnums(type);
-                    builder.setValue(new Value(type));
                     builder.setValueType(ValueType.makeEnum(enums));
+                    builder.setValue(new Value(type));
                 }
 
                 builder.setWritable(Writable.WRITE);
