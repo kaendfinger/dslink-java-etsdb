@@ -132,21 +132,14 @@ public class WatchGroup {
             throw new RuntimeException("Watch name already exists");
         }
 
-        NodeBuilder builder = watches.createChild(name);
+        final NodeBuilder builder = watches.createChild(name);
         builder.setWritable(Writable.WRITE);
         builder.setValueType(ValueType.makeBool("enabled", "disabled"));
         builder.setValue(new Value(true));
 
-        Watch watch = new Watch(this, builder.getChild(), path);
+        Node node = builder.getChild();
+        Watch watch = new Watch(this, node, path);
         watch.init();
-        Node node = builder.build();
-
-        builder = node.createChild("unsubscribe");
-        Node data = watch.getDataNode();
-        Action act = DataNode.getUnsubscribeAction(this, node, data, path);
-        builder.setAction(act);
-        builder.getChild().setSerializable(false);
-        builder.build();
     }
 
     public void init(boolean subscribe) {

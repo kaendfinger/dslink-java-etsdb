@@ -2,6 +2,11 @@ package org.dsa.iot.etsdb.etsdb;
 
 import org.dsa.iot.dslink.link.Requester;
 import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.NodeBuilder;
+import org.dsa.iot.dslink.node.Permission;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.SubscriptionValue;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValuePair;
@@ -50,6 +55,9 @@ public class Watch implements Handler<SubscriptionValue> {
         startNode = watchNode.createChild("startDate").build();
         endNode = watchNode.createChild("endDate").build();
 
+        setPathValue();
+        initUnsubscribe();
+        initNameActions();
         initRealTimeValue();
         initDbValue();
         initStartValue();
@@ -113,6 +121,19 @@ public class Watch implements Handler<SubscriptionValue> {
         req.unsubscribe(path, null);
     }
 
+    public void setPathValue() {
+        if (watchNode.getDisplayName() != null) {
+            NodeBuilder b = watchNode.createChild("path");
+            b.setDisplayName("Path");
+            b.setValueType(ValueType.STRING);
+            b.setValue(new Value(path));
+            b.getChild().setSerializable(false);
+            b.build();
+        } else {
+            watchNode.removeChild("path");
+        }
+    }
+
     protected void setLastWrittenValue(Value value) {
         lastWrittenNode.setValue(value);
     }
@@ -141,6 +162,20 @@ public class Watch implements Handler<SubscriptionValue> {
     private void initDbValue() {
         lastWrittenNode.setValueType(ValueType.DYNAMIC);
         lastWrittenNode.setDisplayName("Last Written Value");
+    }
+
+    protected void initUnsubscribe() {
+        Node node = watchNode;
+        NodeBuilder b = node.createChild("unsubscribe");
+        b.setDisplayName("Unsubscribe");
+        {
+            Node data = getDataNode();
+            WatchGroup group = getGroup();
+            Action act = DataNode.getUnsubscribeAction(group, node, data, path);
+            b.setAction(act);
+        }
+        b.getChild().setSerializable(false);
+        b.build();
     }
 
     protected void initStartValue() {
@@ -177,6 +212,35 @@ public class Watch implements Handler<SubscriptionValue> {
                 child.setValue(value);
             }
         });
+    }
+
+    private void initNameActions() {
+        NodeBuilder b = watchNode.createChild("setDisplayName");
+        b.getChild().setSerializable(false);
+        b.setDisplayName("Set Display Name");
+
+        Action act = new Action(Permission.READ, new DisplayNameSetter());
+        Parameter param = new Parameter("name", ValueType.STRING);
+        param.setDescription("Sets the display name of the watch path\nLeave name blank to remove the display name");
+        act.addParameter(param);
+        b.setAction(act);
+
+        b.build();
+    }
+
+    private class DisplayNameSetter implements Handler<ActionResult> {
+
+        @Override
+        public void handle(ActionResult event) {
+            Value vName = event.getParameter("name");
+            if (vName != null) {
+                String name = vName.getString();
+                watchNode.setDisplayName(name);
+            } else {
+                watchNode.setDisplayName(null);
+            }
+            setPathValue();
+        }
     }
 
     static {
