@@ -221,7 +221,9 @@ public class Watch implements Handler<SubscriptionValue> {
 
         Action act = new Action(Permission.READ, new DisplayNameSetter());
         Parameter param = new Parameter("name", ValueType.STRING);
-        param.setDescription("Sets the display name of the watch path\nLeave name blank to remove the display name");
+        String desc = "Sets the display name of the watch path.\n";
+        desc += "Leave the name blank to remove the display name.";
+        param.setDescription(desc);
         act.addParameter(param);
         b.setAction(act);
 
