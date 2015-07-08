@@ -119,7 +119,7 @@ public class GetHistory implements Handler<ActionResult> {
         }
 
         {
-            Parameter param = new Parameter("ts", ValueType.TIME);
+            Parameter param = new Parameter("timestamp", ValueType.TIME);
             act.addResult(param);
         }
 
