@@ -140,6 +140,7 @@ public class WatchGroup {
         Node node = builder.getChild();
         Watch watch = new Watch(this, node, path);
         watch.init();
+        builder.build();
     }
 
     public void init(boolean subscribe) {
