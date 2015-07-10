@@ -3,15 +3,15 @@ package org.dsa.iot.etsdb.actions;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.*;
+import org.dsa.iot.dslink.node.actions.table.Row;
+import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
-import org.dsa.iot.dslink.node.value.ValueUtils;
-import org.dsa.iot.etsdb.stats.Interval;
-import org.dsa.iot.etsdb.utils.TimeParser;
+import org.dsa.iot.historian.stats.Interval;
+import org.dsa.iot.historian.utils.TimeParser;
 import org.etsdb.Database;
 import org.etsdb.QueryCallback;
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.json.JsonArray;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -51,25 +51,24 @@ public class GetHistory implements Handler<ActionResult> {
         final String sRollup = event.getParameter("Rollup").getString();
         final Interval interval = Interval.parse(sInterval, sRollup);
 
-        final JsonArray updates = new JsonArray();
+        final Table table = event.getTable();
         db.query(path, from, to, new QueryCallback<Value>() {
             @Override
             public void sample(String seriesId, long ts, Value value) {
-                JsonArray update;
+                Row row;
                 if (interval == null) {
-                    update = new JsonArray();
-                    update.addString(TimeParser.parse(ts));
-                    ValueUtils.toJson(update, value);
+                    row = new Row();
+                    row.addValue(new Value(TimeParser.parse(ts)));
+                    row.addValue(value);
                 } else {
-                    update = interval.getUpdate(value, ts);
+                    row = interval.getRowUpdate(value, ts);
                 }
 
-                if (update != null) {
-                    updates.addArray(update);
+                if (row != null) {
+                    table.addRow(row);
                 }
             }
         });
-        event.setUpdates(updates);
     }
 
     public static Action make(Node data, Node parent, Database<Value> db) {
