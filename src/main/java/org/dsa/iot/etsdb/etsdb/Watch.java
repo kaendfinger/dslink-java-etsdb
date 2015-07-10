@@ -13,7 +13,7 @@ import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.etsdb.utils.LinkPair;
 import org.dsa.iot.etsdb.utils.PathValuePair;
-import org.dsa.iot.etsdb.utils.TimeParser;
+import org.dsa.iot.historian.utils.TimeParser;
 import org.etsdb.Database;
 import org.etsdb.QueryCallback;
 import org.slf4j.Logger;

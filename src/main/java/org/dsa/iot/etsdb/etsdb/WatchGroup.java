@@ -15,7 +15,7 @@ import org.dsa.iot.etsdb.actions.watch.AddWatchAction;
 import org.dsa.iot.etsdb.utils.LinkPair;
 import org.dsa.iot.etsdb.utils.LoggingType;
 import org.dsa.iot.etsdb.utils.PathValuePair;
-import org.dsa.iot.etsdb.utils.TimeParser;
+import org.dsa.iot.historian.utils.TimeParser;
 import org.etsdb.Database;
 import org.vertx.java.core.Handler;
 
