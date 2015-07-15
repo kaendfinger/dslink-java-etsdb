@@ -1,4 +1,4 @@
-package org.dsa.iot.etsdb.etsdb;
+package org.dsa.iot.etsdb.db;
 
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;

@@ -1,5 +1,8 @@
 package org.dsa.iot.etsdb.utils;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
  * @author Samuel Grenier
  */
@@ -35,5 +38,16 @@ public enum LoggingType {
         } else {
             throw new IllegalArgumentException("Invalid logging type: " + s);
         }
+    }
+
+    public static Set<String> buildLoggingEnums(String newType) {
+        Set<String> enums = new LinkedHashSet<>();
+        enums.add(newType);
+        for (LoggingType t : LoggingType.values()) {
+            if (!enums.contains(t.getName())) {
+                enums.add(t.getName());
+            }
+        }
+        return enums;
     }
 }

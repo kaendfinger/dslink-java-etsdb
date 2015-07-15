@@ -1,18 +1,91 @@
-package org.dsa.iot.etsdb;
+package org.dsa.iot.etsdb.db;
 
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
-import org.etsdb.Database;
+import org.dsa.iot.historian.database.Database;
+import org.dsa.iot.historian.database.DatabaseProvider;
+import org.dsa.iot.historian.utils.QueryData;
+import org.etsdb.DatabaseFactory;
+import org.etsdb.QueryCallback;
 import org.vertx.java.core.Handler;
+
+import java.io.File;
 
 /**
  * @author Samuel Grenier
  */
-public class DatabaseStats {
+public class Db extends Database {
 
-    public static void init(Database<?> db, Node parent) {
+    private org.etsdb.Database<Value> db;
+    private final String path;
+
+    public Db(String name, String path, DatabaseProvider provider) {
+        super(name, provider);
+        this.path = path;
+    }
+
+    @Override
+    public void write(String path, Value value, long ts) {
+        db.write(path, ts, value);
+    }
+
+    @Override
+    public void query(String path,
+                      long from,
+                      long to,
+                      final Handler<QueryData> handler) {
+        db.query(path, from, to, new QueryCallback<Value>() {
+            @Override
+            public void sample(String seriesId, long ts, Value value) {
+                handler.handle(new QueryData(value, ts));
+            }
+        });
+    }
+
+    @Override
+    public QueryData queryFirst(String path) {
+        final QueryData data = new QueryData();
+        db.query(path, Long.MIN_VALUE,
+                Long.MAX_VALUE, 1, new QueryCallback<Value>() {
+            @Override
+            public void sample(String seriesId, long ts, Value value) {
+                data.setTimestamp(ts);
+                data.setValue(value);
+            }
+        });
+        return data;
+    }
+
+    @Override
+    public QueryData queryLast(String path) {
+        final QueryData data = new QueryData();
+        db.query(path, Long.MIN_VALUE,
+                Long.MAX_VALUE, 1, true, new QueryCallback<Value>() {
+            @Override
+            public void sample(String seriesId, long ts, Value value) {
+                data.setTimestamp(ts);
+                data.setValue(value);
+            }
+        });
+        return data;
+    }
+
+    @Override
+    protected void performConnect() throws Exception {
+        File d = new File(path);
+        ValueSerializer vs = new ValueSerializer();
+        db = DatabaseFactory.createDatabase(d, vs);
+    }
+
+    @Override
+    protected void close() throws Exception {
+        db.close();
+    }
+
+    @Override
+    public void initExtensions(Node parent) {
         {
             NodeBuilder b = parent.createChild("wps");
             b.setDisplayName("Writes Per Second");
@@ -178,5 +251,4 @@ public class DatabaseStats {
             });
         }
     }
-
 }

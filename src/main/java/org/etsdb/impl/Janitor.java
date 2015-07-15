@@ -71,7 +71,6 @@ class Janitor implements Runnable {
 
     void terminate() {
         running = false;
-        notify();
     }
 
     @Override

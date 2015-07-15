@@ -18,7 +18,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -84,7 +83,7 @@ public class DatabaseImpl<T> implements Database<T> {
         DBUpgrade upgrade = new DBUpgrade(this);
         upgrade.checkForUpgrade();
 
-        logger.info("Database started");
+        logger.info("Database started at {}", baseDir.getAbsolutePath());
 
         shardStalePeriod = config.getShardStalePeriod();
         if (config.isIgnoreBackdates()) {
