@@ -49,7 +49,7 @@ public interface Database<T> {
 
     TimeRange getTimeRange(List<String> seriesIds);
 
-    void delete(String seriesId, long fromTs, long toTs);
+    long delete(String seriesId, long fromTs, long toTs);
 
     void purge(String seriesId, long toTs);
 

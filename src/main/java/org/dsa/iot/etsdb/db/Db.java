@@ -2,28 +2,65 @@ package org.dsa.iot.etsdb.db;
 
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.NodeUtils;
 import org.dsa.iot.historian.database.Database;
-import org.dsa.iot.historian.database.DatabaseProvider;
 import org.dsa.iot.historian.utils.QueryData;
 import org.etsdb.DatabaseFactory;
 import org.etsdb.QueryCallback;
+import org.etsdb.impl.DatabaseImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.vertx.java.core.Handler;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Samuel Grenier
  */
 public class Db extends Database {
 
-    private org.etsdb.Database<Value> db;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Db.class);
+    private final DbProvider provider;
     private final String path;
+    private final File fPath;
 
-    public Db(String name, String path, DatabaseProvider provider) {
+    private DatabaseImpl<Value> db;
+    private boolean purgeable;
+    private long diskSpaceRemaining;
+
+    public Db(String name, String path, DbProvider provider) {
         super(name, provider);
+        this.provider = provider;
         this.path = path;
+        this.fPath = new File(path);
+    }
+
+    public DatabaseImpl<Value> getDb() {
+        return db;
+    }
+
+    public File getPath() {
+        return fPath;
+    }
+
+    public boolean isPurgeable() {
+        return purgeable;
+    }
+
+    public long getDiskSpaceRemaining() {
+        return diskSpaceRemaining;
+    }
+
+    private void setDiskSpaceRemaining(int space) {
+        long totalSize = fPath.getTotalSpace();
+        this.diskSpaceRemaining = totalSize * (space / 100);
     }
 
     @Override
@@ -77,15 +114,81 @@ public class Db extends Database {
         File d = new File(path);
         ValueSerializer vs = new ValueSerializer();
         db = DatabaseFactory.createDatabase(d, vs);
+        provider.getPurger().addDb(this);
     }
 
     @Override
     protected void close() throws Exception {
+        provider.getPurger().removeDb(this);
         db.close();
     }
 
     @Override
-    public void initExtensions(Node parent) {
+    public void initExtensions(final Node parent) {
+        {
+            NodeBuilder b = parent.createChild("edit");
+            b.setDisplayName("Edit");
+            b.setRoConfig("ap", new Value(true));
+            b.setRoConfig("dsr", new Value(10));
+            {
+                final Parameter purgeParam;
+                {
+                    purgeParam = new Parameter("Auto Purge", ValueType.BOOL);
+                    Value def = NodeUtils.getRoConfig(b, "ap");
+                    purgeParam.setDefaultValue(def);
+                    {
+                        String desc = "Whether the database is allowed to ";
+                        desc += "be purged automatically.";
+                        purgeParam.setDescription(desc);
+                    }
+                }
+
+                final Parameter spaceParam;
+                {
+                    spaceParam = new Parameter("Disk Space Remaining", ValueType.NUMBER);
+                    Value def = NodeUtils.getRoConfig(b, "dsr");
+                    spaceParam.setDefaultValue(def);
+                    {
+                        String desc = "Controls how much disk space should be ";
+                        desc += "remaining before a purge gets ran.\n";
+                        desc += "Disk Space Remaining is a percentage of the ";
+                        desc += "total disk space on the partition that this ";
+                        desc += "database is stored on";
+                        spaceParam.setDescription(desc);
+                    }
+                }
+
+                EditSettingsHandler handler = new EditSettingsHandler();
+
+                Action a = new Action(getProvider().dbPermission(), handler);
+                a.addParameter(purgeParam);
+                a.addParameter(spaceParam);
+
+                handler.setAction(a);
+                handler.setPurgeParam(purgeParam);
+                handler.setDiskParam(spaceParam);
+
+                b.setAction(a);
+            }
+            Node node = b.build();
+            purgeable = node.getRoConfig("ap").getBool();
+            setDiskSpaceRemaining(node.getRoConfig("dsr").getNumber().intValue());
+        }
+
+        {
+            NodeBuilder b = parent.createChild("dap");
+            b.setDisplayName("Delete and Purge");
+            b.setAction(new Action(getProvider().dbPermission(),
+                    new Handler<ActionResult>() {
+                        @Override
+                        public void handle(ActionResult event) {
+                            getProvider().deleteDb(parent);
+                            deleteDirectory(fPath);
+                        }
+                    }));
+            b.build();
+        }
+
         {
             NodeBuilder b = parent.createChild("wps");
             b.setDisplayName("Writes Per Second");
@@ -249,6 +352,70 @@ public class Db extends Database {
                     node.setValue(new Value(event));
                 }
             });
+        }
+    }
+
+    private static void deleteDirectory(File path) {
+        File[] files = path.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isFile()) {
+                    if (!f.delete()) {
+                        LOGGER.error("Failed to delete: {}", f.getAbsolutePath());
+                    }
+                } else {
+                    deleteDirectory(f);
+                }
+            }
+        }
+        if (!path.delete()) {
+            LOGGER.error("Failed to delete: {}", path.getAbsolutePath());
+        }
+    }
+
+    private class EditSettingsHandler implements Handler<ActionResult> {
+
+        private Action action;
+        private Parameter purgeParam;
+        private Parameter diskParam;
+
+        private void setAction(Action a) {
+            this.action = a;
+        }
+
+        private void setPurgeParam(Parameter p) {
+            this.purgeParam = p;
+        }
+
+        private void setDiskParam(Parameter p) {
+            this.diskParam = p;
+        }
+
+        @Override
+        public void handle(ActionResult event) {
+            Node node = event.getNode();
+
+            Value vP = event.getParameter("Auto Purge", ValueType.BOOL);
+            node.setRoConfig("ap", vP);
+
+            Value vD = event.getParameter("Disk Space Remaining", ValueType.NUMBER);
+            if (vD.getNumber().intValue() < 0) {
+                vD.set(0);
+            } else if (vD.getNumber().intValue() > 100) {
+                vD.set(100);
+            }
+            node.setRoConfig("dsr", vD);
+
+            purgeable = vP.getBool();
+            purgeParam.setDefaultValue(vP);
+
+            setDiskSpaceRemaining(vD.getNumber().intValue());
+            diskParam.setDefaultValue(vD);
+
+            List<Parameter> params = new ArrayList<>();
+            params.add(purgeParam);
+            params.add(diskParam);
+            action.setParams(params);
         }
     }
 }

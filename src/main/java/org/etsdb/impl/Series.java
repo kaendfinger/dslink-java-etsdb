@@ -207,8 +207,29 @@ class Series<T> {
         return range;
     }
 
-    void delete(long fromTs, long toTs) {
-        // TODO
+    long delete(long fromTs, long toTs) throws IOException {
+        long fromShard = Utils.getShardId(fromTs);
+        long toShard = Utils.getShardId(toTs);
+        long deleteCount = 0;
+
+        synchronized (shardLookup) {
+            if (fromShard < minShard)
+                fromShard = minShard;
+            if (toShard > maxShard)
+                toShard = maxShard;
+
+            for (long shardId = fromShard; shardId <= toShard; ++shardId) {
+                DataShard shard = getShardById(shardId, true);
+                try {
+                    long fromOffset = Utils.getOffsetInShard(shardId, fromTs);
+                    long toOffset = Utils.getOffsetInShard(shardId, toTs);
+                    deleteCount += shard.deleteSamples(fromOffset, toOffset);
+                } finally {
+                    shard.unlockWrite();
+                }
+            }
+        }
+        return deleteCount;
     }
 
     void purge(long toTs) {

@@ -348,24 +348,35 @@ public class DatabaseImpl<T> implements Database<T> {
             if (base != null) {
                 for (File sub : base) {
                     if (sub.isDirectory()) {
-                        File[] subs = sub.listFiles();
-                        if (subs != null) {
-                            for (File series : subs) {
-                                if (series.isDirectory()) {
-                                    ids.add(series.getName());
-                                }
-                            }
-                        }
+                        int subPos = sub.getPath().length() + 1;
+                        ids.addAll(list(sub, subPos));
                     }
                 }
             }
 
             Collections.sort(ids);
-
             return ids;
         } finally {
             unlockConcurrent();
         }
+    }
+
+    private Set<String> list(File start, int subPos) {
+        Set<String> filesList = new HashSet<>();
+        File[] files = start.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    filesList.addAll(list(f, subPos));
+                } else {
+                    String name = f.getName();
+                    if (name.endsWith(".data")) {
+                        filesList.add(f.getParent().substring(subPos));
+                    }
+                }
+            }
+        }
+        return filesList;
     }
 
     @Override
@@ -408,11 +419,11 @@ public class DatabaseImpl<T> implements Database<T> {
     }
 
     @Override
-    public void delete(String seriesId, long fromTs, long toTs) {
+    public long delete(String seriesId, long fromTs, long toTs) {
         lockConcurrent();
         try {
             Series<T> series = getSeries(seriesId);
-            series.delete(fromTs, toTs);
+            return series.delete(fromTs, toTs);
         } catch (IOException e) {
             throw new EtsdbException(e);
         } finally {
@@ -503,6 +514,7 @@ public class DatabaseImpl<T> implements Database<T> {
             throw new IOException("Database is closed");
         }
 
+        seriesId = sanitizeSeriesId(seriesId);
         Series<T> series = seriesLookup.get(seriesId);
         if (series == null) {
             synchronized (seriesLookup) {
@@ -803,6 +815,13 @@ public class DatabaseImpl<T> implements Database<T> {
                 cb.sample(seriesId, ts, t);
             }
         }
+    }
+
+    private String sanitizeSeriesId(String seriesId) {
+        if (seriesId.startsWith("/")) {
+            return seriesId.substring(1);
+        }
+        return seriesId;
     }
 
     class WideCallbackWrapper implements RawWideQueryCallback {

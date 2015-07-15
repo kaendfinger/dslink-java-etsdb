@@ -370,6 +370,52 @@ class DataShard {
         }
     }
 
+    long deleteSamples(long fromTs, long toTs) throws IOException {
+        if (!dataFile.exists()) {
+            return 0;
+        }
+
+        // Close the data output stream
+        closeData();
+
+        // Rewrite the file.
+        File tempFile = getTempFile();
+        ChecksumOutputStream tempOut = new ChecksumOutputStream(new FileOutputStream(tempFile, false));
+
+        ChecksumInputStream in = null;
+        ScanInfo scanInfo = new ScanInfo();
+        long deleteCount = 0;
+        try {
+            in = new ChecksumInputStream(dataFile);
+            ByteArrayBuilder b = scanInfo.getData();
+
+            readSample(in, scanInfo);
+
+            while (!scanInfo.isEof()) {
+                long offset = scanInfo.getOffset();
+                if (offset < fromTs || offset > toTs) {
+                    _writeSample(tempOut, scanInfo.getOffset(), b.getBuffer(), b.getReadOffset(), b.getAvailable());
+                } else {
+                    deleteCount++;
+                }
+                readSample(in, scanInfo);
+            }
+        } finally {
+            Utils.closeQuietly(in);
+            Utils.closeQuietly(tempOut);
+        }
+
+        // Delete the old file and copy the temp to replace it.
+        try {
+            Utils.deleteWithRetry(dataFile);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            Utils.renameWithRetry(tempFile, dataFile);
+        }
+        return deleteCount;
+    }
+
     /**
      * The list of backdates must be in chronological order.
      */
@@ -444,8 +490,9 @@ class DataShard {
             Utils.deleteWithRetry(dataFile);
         } catch (IOException e) {
             throw e;
+        } finally {
+            Utils.renameWithRetry(tempFile, dataFile);
         }
-        Utils.renameWithRetry(tempFile, dataFile);
     }
 
     void close() {
