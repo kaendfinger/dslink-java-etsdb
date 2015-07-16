@@ -9,12 +9,13 @@ import org.dsa.iot.historian.database.DatabaseProvider;
  */
 public class Main extends Historian {
 
-    public Main(DatabaseProvider provider) {
-        super(provider);
+    @Override
+    public DatabaseProvider createProvider() {
+        return new DbProvider();
     }
 
     public static void main(String[] args) {
-        Main main = new Main(new DbProvider());
+        Main main = new Main();
         main.start("etsdb", args);
     }
 }
