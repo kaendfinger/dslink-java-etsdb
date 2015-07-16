@@ -8,6 +8,7 @@ import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.NodeUtils;
+import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.historian.database.Database;
 import org.dsa.iot.historian.utils.QueryData;
 import org.etsdb.DatabaseFactory;
@@ -20,6 +21,9 @@ import org.vertx.java.core.Handler;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Samuel Grenier
@@ -34,6 +38,7 @@ public class Db extends Database {
     private DatabaseImpl<Value> db;
     private boolean purgeable;
     private long diskSpaceRemaining;
+    private ScheduledFuture<?> diskMonitor;
 
     public Db(String name, String path, DbProvider provider) {
         super(name, provider);
@@ -86,12 +91,12 @@ public class Db extends Database {
         final QueryData data = new QueryData();
         db.query(path, Long.MIN_VALUE,
                 Long.MAX_VALUE, 1, new QueryCallback<Value>() {
-            @Override
-            public void sample(String seriesId, long ts, Value value) {
-                data.setTimestamp(ts);
-                data.setValue(value);
-            }
-        });
+                    @Override
+                    public void sample(String seriesId, long ts, Value value) {
+                        data.setTimestamp(ts);
+                        data.setValue(value);
+                    }
+                });
         return data;
     }
 
@@ -100,12 +105,12 @@ public class Db extends Database {
         final QueryData data = new QueryData();
         db.query(path, Long.MIN_VALUE,
                 Long.MAX_VALUE, 1, true, new QueryCallback<Value>() {
-            @Override
-            public void sample(String seriesId, long ts, Value value) {
-                data.setTimestamp(ts);
-                data.setValue(value);
-            }
-        });
+                    @Override
+                    public void sample(String seriesId, long ts, Value value) {
+                        data.setTimestamp(ts);
+                        data.setValue(value);
+                    }
+                });
         return data;
     }
 
@@ -120,7 +125,11 @@ public class Db extends Database {
     @Override
     protected void close() throws Exception {
         provider.getPurger().removeDb(this);
-        db.close();
+        try {
+            db.close();
+        } finally {
+            diskMonitor.cancel(false);
+        }
     }
 
     @Override
@@ -352,6 +361,34 @@ public class Db extends Database {
                     node.setValue(new Value(event));
                 }
             });
+        }
+
+        {
+            NodeBuilder b = parent.createChild("dbs");
+            b.setDisplayName("Database Size");
+            b.setValueType(ValueType.NUMBER);
+            b.setConfig("unit", new Value("MiB"));
+            final Node node;
+            {
+                Node tmp = b.getParent().getChild("dbs");
+                if (tmp == null) {
+                    node = b.getChild();
+                } else {
+                    node = tmp;
+                }
+            }
+
+            ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
+            diskMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    double size = db.getDatabaseSize();
+                    size /= 1048576;
+                    node.setValue(new Value(size));
+
+                }
+            }, 0, 5, TimeUnit.SECONDS);
+            b.build();
         }
     }
 
