@@ -159,10 +159,9 @@ public class Db extends Database {
                     spaceParam.setDefaultValue(def);
                     {
                         String desc = "Controls how much disk space should be ";
-                        desc += "remaining before a purge gets ran.\n";
-                        desc += "Disk Space Remaining is a percentage of the ";
-                        desc += "total disk space on the partition that this ";
-                        desc += "database is stored on";
+                        desc += "remaining before a purge gets ran based on ";
+                        desc += "a percentage of the total disk space on the ";
+                        desc += "partition that the database is stored on";
                         spaceParam.setDescription(desc);
                     }
                 }
