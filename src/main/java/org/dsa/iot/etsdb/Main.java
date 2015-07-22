@@ -16,6 +16,6 @@ public class Main extends Historian {
 
     public static void main(String[] args) {
         Main main = new Main();
-        main.start("etsdb", args);
+        main.start(args);
     }
 }
