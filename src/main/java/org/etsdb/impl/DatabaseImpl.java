@@ -385,6 +385,11 @@ public class DatabaseImpl<T> implements Database<T> {
     }
 
     @Override
+    public long availableSpace() {
+        return baseDir.getUsableSpace();
+    }
+
+    @Override
     public TimeRange getTimeRange(String... seriesId) {
         lockConcurrent();
         try {

@@ -38,7 +38,8 @@ public class Db extends Database {
     private DatabaseImpl<Value> db;
     private boolean purgeable;
     private long diskSpaceRemaining;
-    private ScheduledFuture<?> diskMonitor;
+    private ScheduledFuture<?> diskUsedMonitor;
+    private ScheduledFuture<?> diskFreeMonitor;
 
     public Db(String name, String path, DbProvider provider) {
         super(name, provider);
@@ -123,12 +124,13 @@ public class Db extends Database {
     }
 
     @Override
-    protected void close() throws Exception {
+    public void close() throws Exception {
         provider.getPurger().removeDb(this);
         try {
             db.close();
         } finally {
-            diskMonitor.cancel(false);
+            diskUsedMonitor.cancel(false);
+            diskFreeMonitor.cancel(false);
         }
     }
 
@@ -378,10 +380,37 @@ public class Db extends Database {
             }
 
             ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
-            diskMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
+            diskUsedMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
                     double size = db.getDatabaseSize();
+                    size /= 1048576;
+                    node.setValue(new Value(size));
+
+                }
+            }, 0, 5, TimeUnit.SECONDS);
+            b.build();
+        }
+        {
+            NodeBuilder b = parent.createChild("sa");
+            b.setDisplayName("Space Available");
+            b.setValueType(ValueType.NUMBER);
+            b.setConfig("unit", new Value("MiB"));
+            final Node node;
+            {
+                Node tmp = b.getParent().getChild("sa");
+                if (tmp == null) {
+                    node = b.getChild();
+                } else {
+                    node = tmp;
+                }
+            }
+
+            ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
+            diskFreeMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    double size = db.availableSpace();
                     size /= 1048576;
                     node.setValue(new Value(size));
 

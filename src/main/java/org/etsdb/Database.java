@@ -45,6 +45,8 @@ public interface Database<T> {
 
     long getDatabaseSize();
 
+    long availableSpace();
+
     TimeRange getTimeRange(String... seriesId);
 
     TimeRange getTimeRange(List<String> seriesIds);
