@@ -64,7 +64,8 @@ public class DbPurger {
                         curr = path.getUsableSpace();
                     }
                     if (delCount > 0) {
-                        LOGGER.debug("Deleted " + delCount + " records");
+                        String p = path.getPath();
+                        LOGGER.info("Deleted {} records from {}", delCount, p);
                     }
                 }
             }
