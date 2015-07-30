@@ -20,6 +20,11 @@ public class NotifyAtomicLong {
         return aLong.get();
     }
 
+    public void set(long val) {
+        aLong.set(val);
+        notifyHandler(val);
+    }
+
     public long addAndGet(long l) {
         return notifyHandler(aLong.addAndGet(l));
     }

@@ -700,6 +700,10 @@ public class DatabaseImpl<T> implements Database<T> {
         return writeCount.get();
     }
 
+    public void setWriteCount(long count) {
+        writeCount.set(count);
+    }
+
     @Override
     public void setWriteCountHandler(Handler<Long> handler) {
         writeCount.setHandler(handler);
@@ -710,6 +714,10 @@ public class DatabaseImpl<T> implements Database<T> {
         return flushCount.get();
     }
 
+    public void setFlushCount(long val) {
+        flushCount.set(val);
+    }
+
     @Override
     public void setFlushCountHandler(Handler<Long> handler) {
         flushCount.setHandler(handler);
@@ -718,6 +726,10 @@ public class DatabaseImpl<T> implements Database<T> {
     @Override
     public long getBackdateCount() {
         return backdateCount.get();
+    }
+
+    public void setBackdateCount(long val) {
+        backdateCount.set(val);
     }
 
     @Override
@@ -740,6 +752,10 @@ public class DatabaseImpl<T> implements Database<T> {
         return flushForced.get();
     }
 
+    public void setFlushForced(long val) {
+        flushForced.set(val);
+    }
+
     @Override
     public void setFlushForcedHandler(Handler<Long> handler) {
         flushForced.setHandler(handler);
@@ -750,6 +766,10 @@ public class DatabaseImpl<T> implements Database<T> {
         return flushExpired.get();
     }
 
+    public void setFlushExpired(long val) {
+        flushExpired.set(val);
+    }
+
     @Override
     public void setFlushExpiredHandler(Handler<Long> handler) {
         flushExpired.setHandler(handler);
@@ -758,6 +778,10 @@ public class DatabaseImpl<T> implements Database<T> {
     @Override
     public long getFlushLimit() {
         return flushLimit.get();
+    }
+
+    public void setFlushLimit(long val) {
+        flushLimit.set(val);
     }
 
     @Override

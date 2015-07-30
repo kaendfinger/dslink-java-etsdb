@@ -218,9 +218,9 @@ public class Db extends Database {
             NodeBuilder b = parent.createChild("rw");
             b.setDisplayName("Rows Written");
             b.setValueType(ValueType.NUMBER);
-            b.setValue(new Value(db.getBackdateCount()));
+            b.setValue(new Value(db.getWriteCount()));
             final Node node = b.build();
-            node.setSerializable(false);
+            db.setWriteCount(node.getValue().getNumber().longValue());
             db.setWriteCountHandler(new Handler<Long>() {
                 @Override
                 public void handle(Long event) {
@@ -235,7 +235,7 @@ public class Db extends Database {
             b.setValueType(ValueType.NUMBER);
             b.setValue(new Value(db.getFlushCount()));
             final Node node = b.build();
-            node.setSerializable(false);
+            db.setFlushCount(node.getValue().getNumber().longValue());
             db.setFlushCountHandler(new Handler<Long>() {
                 @Override
                 public void handle(Long event) {
@@ -265,7 +265,7 @@ public class Db extends Database {
             b.setValueType(ValueType.NUMBER);
             b.setValue(new Value(db.getFlushForced()));
             final Node node = b.build();
-            node.setSerializable(false);
+            db.setFlushForced(node.getValue().getNumber().longValue());
             db.setFlushForcedHandler(new Handler<Long>() {
                 @Override
                 public void handle(Long event) {
@@ -280,7 +280,7 @@ public class Db extends Database {
             b.setValueType(ValueType.NUMBER);
             b.setValue(new Value(db.getFlushExpired()));
             final Node node = b.build();
-            node.setSerializable(false);
+            db.setFlushExpired(node.getValue().getNumber().longValue());
             db.setFlushExpiredHandler(new Handler<Long>() {
                 @Override
                 public void handle(Long event) {
@@ -295,7 +295,7 @@ public class Db extends Database {
             b.setValueType(ValueType.NUMBER);
             b.setValue(new Value(db.getFlushLimit()));
             final Node node = b.build();
-            node.setSerializable(false);
+            db.setFlushLimit(node.getValue().getNumber().longValue());
             db.setFlushLimitHandler(new Handler<Long>() {
                 @Override
                 public void handle(Long event) {
@@ -325,7 +325,7 @@ public class Db extends Database {
             b.setValueType(ValueType.NUMBER);
             b.setValue(new Value(db.getBackdateCount()));
             final Node node = b.build();
-            node.setSerializable(false);
+            db.setBackdateCount(node.getValue().getNumber().longValue());
             db.setBackdateCountHandler(new Handler<Long>() {
                 @Override
                 public void handle(Long event) {
