@@ -46,7 +46,7 @@ public class EventHistogram {
         return getEventCounts(true);
     }
 
-    public int[] getEventCounts(boolean update) {
+    private int[] getEventCounts(boolean update) {
         if (update) {
             update();
         }

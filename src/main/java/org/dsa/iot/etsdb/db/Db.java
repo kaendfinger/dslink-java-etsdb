@@ -40,6 +40,7 @@ public class Db extends Database {
     private long diskSpaceRemaining;
     private ScheduledFuture<?> diskUsedMonitor;
     private ScheduledFuture<?> diskFreeMonitor;
+    private ScheduledFuture<?> wpsMonitor;
 
     public Db(String name, String path, DbProvider provider) {
         super(name, provider);
@@ -131,6 +132,7 @@ public class Db extends Database {
         } finally {
             diskUsedMonitor.cancel(false);
             diskFreeMonitor.cancel(false);
+            wpsMonitor.cancel(false);
         }
     }
 
@@ -182,7 +184,8 @@ public class Db extends Database {
             }
             Node node = b.build();
             purgeable = node.getRoConfig("ap").getBool();
-            setDiskSpaceRemaining(node.getRoConfig("dsr").getNumber().intValue());
+            Number n = node.getRoConfig("dsr").getNumber();
+            setDiskSpaceRemaining(n.intValue());
         }
 
         {
@@ -207,12 +210,15 @@ public class Db extends Database {
             b.setValue(new Value(db.getWritesPerSecond()));
             b.setSerializable(false);
             final Node node = b.build();
-            db.setWritesPerSecondHandler(new Handler<Integer>() {
+
+            ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
+            wpsMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
                 @Override
-                public void handle(Integer event) {
-                    node.setValue(new Value(event));
+                public void run() {
+                    int wps = db.getWritesPerSecond();
+                    node.setValue(new Value(wps));
                 }
-            });
+            }, 1, 1, TimeUnit.SECONDS);
         }
 
         {
