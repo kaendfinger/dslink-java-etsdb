@@ -170,15 +170,41 @@ public class Db extends Database {
                     }
                 }
 
+                final Parameter pathParam;
+                {
+                    pathParam = new Parameter("Path", ValueType.STRING);
+                    Value def = parent.getConfig("path");
+                    pathParam.setDefaultValue(def);
+                    {
+                        String desc = "Location of the database on the file ";
+                        desc += "system. The path can absolute or relative. ";
+                        desc += "Changing the path will cause the current ";
+                        desc += "database to be moved to the new location.";
+                        pathParam.setDescription(desc);
+                    }
+                }
+
+                final Parameter nameParam;
+                {
+                    nameParam = new Parameter("Name", ValueType.STRING);
+                    Value def = new Value(parent.getDisplayName());
+                    nameParam.setDefaultValue(def);
+                    nameParam.setDescription("Display name of the database");
+                }
+
                 EditSettingsHandler handler = new EditSettingsHandler();
 
                 Action a = new Action(getProvider().dbPermission(), handler);
                 a.addParameter(purgeParam);
                 a.addParameter(spaceParam);
+                a.addParameter(pathParam);
+                a.addParameter(nameParam);
 
                 handler.setAction(a);
                 handler.setPurgeParam(purgeParam);
                 handler.setDiskParam(spaceParam);
+                handler.setPathParam(pathParam);
+                handler.setNameParam(nameParam);
 
                 b.setAction(a);
             }
@@ -452,17 +478,27 @@ public class Db extends Database {
         private Action action;
         private Parameter purgeParam;
         private Parameter diskParam;
+        private Parameter pathParam;
+        private Parameter nameParam;
 
-        private void setAction(Action a) {
+        void setAction(Action a) {
             this.action = a;
         }
 
-        private void setPurgeParam(Parameter p) {
+        void setPurgeParam(Parameter p) {
             this.purgeParam = p;
         }
 
-        private void setDiskParam(Parameter p) {
+        void setDiskParam(Parameter p) {
             this.diskParam = p;
+        }
+
+        void setPathParam(Parameter p) {
+            this.pathParam = p;
+        }
+
+        void setNameParam(Parameter p ) {
+            this.nameParam = p;
         }
 
         @Override
@@ -486,9 +522,23 @@ public class Db extends Database {
             setDiskSpaceRemaining(vD.getNumber().intValue());
             diskParam.setDefaultValue(vD);
 
+            Value vPath = event.getParameter("Path", ValueType.STRING);
+            String path = node.getParent().getConfig("path").getString();
+            if (!path.equals(vPath.getString())) {
+                node.getParent().setConfig("path", vPath);
+                db.move(new File(vPath.getString()));
+                pathParam.setDefaultValue(vPath);
+            }
+
+            Value vName = event.getParameter("Name", ValueType.STRING);
+            node.getParent().setDisplayName(vName.getString());
+            nameParam.setDefaultValue(vName);
+
             List<Parameter> params = new ArrayList<>();
             params.add(purgeParam);
             params.add(diskParam);
+            params.add(pathParam);
+            params.add(nameParam);
             action.setParams(params);
         }
     }

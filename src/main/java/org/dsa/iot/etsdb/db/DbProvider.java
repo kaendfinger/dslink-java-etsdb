@@ -9,15 +9,13 @@ import org.dsa.iot.dslink.node.actions.EditorType;
 import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.StringUtils;
 import org.dsa.iot.historian.database.Database;
 import org.dsa.iot.historian.database.DatabaseProvider;
 import org.dsa.iot.historian.database.Watch;
 import org.dsa.iot.historian.utils.TimeParser;
 import org.etsdb.impl.DatabaseImpl;
 import org.vertx.java.core.Handler;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 /**
  * @author Samuel Grenier
@@ -43,19 +41,17 @@ public class DbProvider extends DatabaseProvider {
                 Value vPath = event.getParameter("Path", ValueType.STRING);
                 String path = vPath.getString();
 
-                NodeBuilder builder;
-                try {
-                    String name = URLEncoder.encode(path, "UTF-8");
-                    builder = createDbNode(name, event);
-                    builder.setConfig("path", new Value(path));
+                String name = StringUtils.encodeName(path);
+                NodeBuilder builder = createDbNode(name, event);
+                builder.setConfig("path", new Value(path));
 
-                    Value vName = event.getParameter("Name");
-                    if (vName != null) {
-                        builder.setDisplayName(vName.getString());
-                    }
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
+                Value vName = event.getParameter("Name");
+                if (vName != null) {
+                    builder.setDisplayName(vName.getString());
+                } else {
+                    builder.setDisplayName(path);
                 }
+
                 createAndInitDb(builder.build());
             }
         });

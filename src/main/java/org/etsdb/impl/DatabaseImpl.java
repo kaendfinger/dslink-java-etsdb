@@ -37,31 +37,32 @@ public class DatabaseImpl<T> implements Database<T> {
     public static final int VERSION = 2;
     static final Logger logger = LoggerFactory.getLogger(DatabaseImpl.class.getName());
     final Serializer<T> serializer;
-    final int shardStalePeriod;
+    int shardStalePeriod;
     // Open shards
-    final int maxOpenFiles;
+    int maxOpenFiles;
     final NotifyAtomicInteger openShards = new NotifyAtomicInteger();
     final NotifyAtomicInteger openFiles = new NotifyAtomicInteger();
     // Write queue
-    final WriteQueueInfo queueInfo;
+    WriteQueueInfo queueInfo;
     final NotifyAtomicLong flushCount = new NotifyAtomicLong();
     final AtomicLong forcedClose = new AtomicLong();
     final NotifyAtomicLong flushForced = new NotifyAtomicLong();
     final NotifyAtomicLong flushExpired = new NotifyAtomicLong();
     final NotifyAtomicLong flushLimit = new NotifyAtomicLong();
     // Configuration
-    private final File baseDir;
+    private File baseDir;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Janitor janitor;
+    private Janitor janitor;
     private final Map<String, Series<T>> seriesLookup = new HashMap<>();
     // Backdates
-    private final Backdates backdates;
+    private Backdates backdates;
     // Monitors
     private final EventHistogram writesPerSecond = new EventHistogram(5000, 2);
     private final NotifyAtomicLong writeCount = new NotifyAtomicLong();
     private final NotifyAtomicLong backdateCount = new NotifyAtomicLong();
     private final MultiQueryInfoComparator MQI_COMPARATOR = new MultiQueryInfoComparator();
     // Runtime
+    private final DbConfig config;
     private boolean closed;
 
     public DatabaseImpl(File baseDir, Serializer<T> serializer, DbConfig config) {
@@ -70,14 +71,42 @@ public class DatabaseImpl<T> implements Database<T> {
             config = new DbConfig();
         }
         config.validate();
-
+        this.config = config;
+        this.serializer = serializer;
         this.baseDir = baseDir;
+        open();
+    }
+
+    public void move(File newLoc) {
+        try {
+            close();
+        } catch (Exception ignored) {
+        }
+        lockExclusive();
+        try {
+            if (!this.baseDir.renameTo(newLoc)) {
+                throw new RuntimeException("Failed to move database");
+            }
+            this.baseDir = newLoc;
+            open();
+        } catch (RuntimeException e) {
+            try {
+                close();
+            } catch (Exception ignored) {
+            }
+            open();
+        } finally {
+            unlockExclusive();
+        }
+    }
+
+    private void open() {
+        closed = false;
         if (!baseDir.exists()) {
             if (!baseDir.mkdirs()) {
                 logger.error("Failed to create baseDir: {}", baseDir.getParent());
             }
         }
-        this.serializer = serializer;
 
         // Check for upgrades.
         DBUpgrade upgrade = new DBUpgrade(this);
