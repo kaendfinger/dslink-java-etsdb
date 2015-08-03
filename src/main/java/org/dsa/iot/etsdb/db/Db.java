@@ -188,6 +188,7 @@ public class Db extends Database {
         {
             NodeBuilder b = parent.createChild("dap");
             b.setDisplayName("Delete and Purge");
+            b.setSerializable(false);
             b.setAction(new Action(getProvider().dbPermission(),
                     new Handler<ActionResult>() {
                         @Override
@@ -204,8 +205,8 @@ public class Db extends Database {
             b.setDisplayName("Writes Per Second");
             b.setValueType(ValueType.NUMBER);
             b.setValue(new Value(db.getWritesPerSecond()));
+            b.setSerializable(false);
             final Node node = b.build();
-            node.setSerializable(false);
             db.setWritesPerSecondHandler(new Handler<Integer>() {
                 @Override
                 public void handle(Integer event) {
@@ -367,6 +368,7 @@ public class Db extends Database {
         {
             NodeBuilder b = parent.createChild("dbs");
             b.setDisplayName("Database Size");
+            b.setSerializable(false);
             b.setValueType(ValueType.NUMBER);
             b.setConfig("unit", new Value("MiB"));
             final Node node;
@@ -394,6 +396,7 @@ public class Db extends Database {
         {
             NodeBuilder b = parent.createChild("sa");
             b.setDisplayName("Space Available");
+            b.setSerializable(false);
             b.setValueType(ValueType.NUMBER);
             b.setConfig("unit", new Value("MiB"));
             final Node node;

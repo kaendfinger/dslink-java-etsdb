@@ -96,7 +96,6 @@ class Janitor implements Runnable {
             synchronized (this) {
                 if (running) {
                     try {
-                        logger.debug("Sleeping for " + sleep + " ms");
                         wait(sleep);
                     } catch (InterruptedException e) {
                         // Ignore
