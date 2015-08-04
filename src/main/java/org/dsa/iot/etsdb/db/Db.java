@@ -141,6 +141,50 @@ public class Db extends Database {
         {
             NodeBuilder b = parent.createChild("edit");
             b.setDisplayName("Edit");
+            {
+                final Parameter nameParam;
+                {
+                    nameParam = new Parameter("Name", ValueType.STRING);
+                    Value def = new Value(parent.getDisplayName());
+                    nameParam.setDefaultValue(def);
+                    nameParam.setDescription("Display name of the database");
+                }
+
+                final Parameter pathParam;
+                {
+                    pathParam = new Parameter("Path", ValueType.STRING);
+                    Value def = parent.getConfig("path");
+                    pathParam.setDefaultValue(def);
+                    {
+                        String desc = "Location of the database on the file ";
+                        desc += "system. The path can absolute or relative. ";
+                        desc += "Changing the path will cause the current ";
+                        desc += "database to be moved to the new location.";
+                        pathParam.setDescription(desc);
+                    }
+                }
+
+                EditSettingsHandler handler = new EditSettingsHandler();
+
+                Action a = new Action(getProvider().dbPermission(), handler);
+                a.addParameter(nameParam);
+                a.addParameter(pathParam);
+
+                handler.setAction(a);
+                handler.setNameParam(nameParam);
+                handler.setPathParam(pathParam);
+
+                b.setAction(a);
+            }
+            Node node = b.build();
+            purgeable = node.getRoConfig("ap").getBool();
+            Number n = node.getRoConfig("dsr").getNumber();
+            setDiskSpaceRemaining(n.intValue());
+        }
+
+        {
+            NodeBuilder b = parent.createChild("purgeSettings");
+            b.setDisplayName("Purge Settings");
             b.setRoConfig("ap", new Value(true));
             b.setRoConfig("dsr", new Value(10));
             {
@@ -170,41 +214,14 @@ public class Db extends Database {
                     }
                 }
 
-                final Parameter pathParam;
-                {
-                    pathParam = new Parameter("Path", ValueType.STRING);
-                    Value def = parent.getConfig("path");
-                    pathParam.setDefaultValue(def);
-                    {
-                        String desc = "Location of the database on the file ";
-                        desc += "system. The path can absolute or relative. ";
-                        desc += "Changing the path will cause the current ";
-                        desc += "database to be moved to the new location.";
-                        pathParam.setDescription(desc);
-                    }
-                }
-
-                final Parameter nameParam;
-                {
-                    nameParam = new Parameter("Name", ValueType.STRING);
-                    Value def = new Value(parent.getDisplayName());
-                    nameParam.setDefaultValue(def);
-                    nameParam.setDescription("Display name of the database");
-                }
-
-                EditSettingsHandler handler = new EditSettingsHandler();
-
+                PurgeSettingsHandler handler = new PurgeSettingsHandler();
                 Action a = new Action(getProvider().dbPermission(), handler);
                 a.addParameter(purgeParam);
                 a.addParameter(spaceParam);
-                a.addParameter(pathParam);
-                a.addParameter(nameParam);
 
                 handler.setAction(a);
                 handler.setPurgeParam(purgeParam);
                 handler.setDiskParam(spaceParam);
-                handler.setPathParam(pathParam);
-                handler.setNameParam(nameParam);
 
                 b.setAction(a);
             }
@@ -476,10 +493,49 @@ public class Db extends Database {
     private class EditSettingsHandler implements Handler<ActionResult> {
 
         private Action action;
+        private Parameter nameParam;
+        private Parameter pathParam;
+
+        void setAction(Action a) {
+            this.action = a;
+        }
+
+        void setPathParam(Parameter p) {
+            this.pathParam = p;
+        }
+
+        void setNameParam(Parameter p ) {
+            this.nameParam = p;
+        }
+
+        @Override
+        public void handle(ActionResult event) {
+            Node node = event.getNode();
+
+            Value vName = event.getParameter("Name", ValueType.STRING);
+            node.getParent().setDisplayName(vName.getString());
+            nameParam.setDefaultValue(vName);
+
+            Value vPath = event.getParameter("Path", ValueType.STRING);
+            String path = node.getParent().getConfig("path").getString();
+            if (!path.equals(vPath.getString())) {
+                node.getParent().setConfig("path", vPath);
+                db.move(new File(vPath.getString()));
+                pathParam.setDefaultValue(vPath);
+            }
+
+            List<Parameter> params = new ArrayList<>();
+            params.add(nameParam);
+            params.add(pathParam);
+            action.setParams(params);
+        }
+    }
+
+    private class PurgeSettingsHandler implements Handler<ActionResult> {
+
+        private Action action;
         private Parameter purgeParam;
         private Parameter diskParam;
-        private Parameter pathParam;
-        private Parameter nameParam;
 
         void setAction(Action a) {
             this.action = a;
@@ -491,14 +547,6 @@ public class Db extends Database {
 
         void setDiskParam(Parameter p) {
             this.diskParam = p;
-        }
-
-        void setPathParam(Parameter p) {
-            this.pathParam = p;
-        }
-
-        void setNameParam(Parameter p ) {
-            this.nameParam = p;
         }
 
         @Override
@@ -522,23 +570,9 @@ public class Db extends Database {
             setDiskSpaceRemaining(vD.getNumber().intValue());
             diskParam.setDefaultValue(vD);
 
-            Value vPath = event.getParameter("Path", ValueType.STRING);
-            String path = node.getParent().getConfig("path").getString();
-            if (!path.equals(vPath.getString())) {
-                node.getParent().setConfig("path", vPath);
-                db.move(new File(vPath.getString()));
-                pathParam.setDefaultValue(vPath);
-            }
-
-            Value vName = event.getParameter("Name", ValueType.STRING);
-            node.getParent().setDisplayName(vName.getString());
-            nameParam.setDefaultValue(vName);
-
             List<Parameter> params = new ArrayList<>();
             params.add(purgeParam);
             params.add(diskParam);
-            params.add(pathParam);
-            params.add(nameParam);
             action.setParams(params);
         }
     }
