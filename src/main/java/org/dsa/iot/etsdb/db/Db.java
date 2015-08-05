@@ -176,10 +176,7 @@ public class Db extends Database {
 
                 b.setAction(a);
             }
-            Node node = b.build();
-            purgeable = node.getRoConfig("ap").getBool();
-            Number n = node.getRoConfig("dsr").getNumber();
-            setDiskSpaceRemaining(n.intValue());
+            b.build();
         }
 
         {
