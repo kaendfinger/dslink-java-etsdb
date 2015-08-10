@@ -9,9 +9,21 @@ import org.dsa.iot.historian.database.DatabaseProvider;
  */
 public class Main extends Historian {
 
+    private final DbProvider provider;
+
+    public Main() {
+        this.provider = new DbProvider();
+    }
+
     @Override
     public DatabaseProvider createProvider() {
-        return new DbProvider();
+        return provider;
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        provider.stop();
     }
 
     public static void main(String[] args) {

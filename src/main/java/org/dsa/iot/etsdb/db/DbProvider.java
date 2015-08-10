@@ -32,6 +32,10 @@ public class DbProvider extends DatabaseProvider {
         return purger;
     }
 
+    public void stop() {
+        purger.stop();
+    }
+
     @Override
     public Action createDbAction(Permission perm) {
         Action act = new Action(perm,

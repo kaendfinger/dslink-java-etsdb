@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -21,6 +23,8 @@ public class DbPurger {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbPurger.class);
     private List<Db> databases = new ArrayList<>();
+    private ScheduledFuture<?> fut;
+    private boolean running;
 
     public synchronized void addDb(Db db) {
         if (!databases.contains(db)) {
@@ -32,19 +36,33 @@ public class DbPurger {
         databases.remove(db);
     }
 
+    public void stop() {
+        running = false;
+        synchronized (this) {
+            if (fut != null) {
+                fut.cancel(true);
+            }
+        }
+    }
+
     void setupPurger() {
-        Objects.getDaemonThreadPool().scheduleWithFixedDelay(new Runnable() {
+        running = true;
+        Runnable runner = new Runnable() {
             @Override
-            public synchronized void run() {
+            public void run() {
                 for (Db db : databases) {
-                    if (!db.isPurgeable()) {
+                    if (!(db.isPurgeable() && running)) {
                         continue;
                     }
+
                     File path = db.getPath();
                     long curr = path.getUsableSpace();
                     long request = db.getDiskSpaceRemaining();
                     long delCount = 0;
                     while (curr - request <= 0) {
+                        if (!running) {
+                            break;
+                        }
                         DatabaseImpl<Value> realDb = db.getDb();
 
                         List<String> series = realDb.getSeriesIds();
@@ -69,6 +87,11 @@ public class DbPurger {
                     }
                 }
             }
-        }, 30, 30, TimeUnit.SECONDS);
+        };
+        ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
+        synchronized (this) {
+            TimeUnit u = TimeUnit.SECONDS;
+            fut = stpe.scheduleWithFixedDelay(runner, 30, 30, u);
+        }
     }
 }

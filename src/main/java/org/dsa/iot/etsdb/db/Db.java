@@ -130,9 +130,9 @@ public class Db extends Database {
         try {
             db.close();
         } finally {
-            diskUsedMonitor.cancel(false);
-            diskFreeMonitor.cancel(false);
-            wpsMonitor.cancel(false);
+            diskUsedMonitor.cancel(true);
+            diskFreeMonitor.cancel(true);
+            wpsMonitor.cancel(true);
         }
     }
 
