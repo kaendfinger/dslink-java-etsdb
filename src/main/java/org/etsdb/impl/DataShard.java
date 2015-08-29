@@ -551,7 +551,7 @@ class DataShard {
 
     private void openData() throws IOException {
         if (dataOut == null) {
-            if (!dataFile.exists()) {
+            if (!dataFile.getParentFile().exists()) {
                 if (!dataFile.getParentFile().mkdirs()) {
                     String path = dataFile.getParent();
                     logger.error("Failed to create dataFile: {}", path);
