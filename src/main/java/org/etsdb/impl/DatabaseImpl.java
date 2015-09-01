@@ -60,7 +60,6 @@ public class DatabaseImpl<T> implements Database<T> {
     private final EventHistogram writesPerSecond = new EventHistogram(5000, 2);
     private final NotifyAtomicLong writeCount = new NotifyAtomicLong();
     private final NotifyAtomicLong backdateCount = new NotifyAtomicLong();
-    private final MultiQueryInfoComparator MQI_COMPARATOR = new MultiQueryInfoComparator();
     // Runtime
     private final DbConfig config;
     private boolean closed;
@@ -88,14 +87,13 @@ public class DatabaseImpl<T> implements Database<T> {
                 throw new RuntimeException("Failed to move database");
             }
             this.baseDir = newLoc;
-            open();
         } catch (RuntimeException e) {
             try {
                 close();
             } catch (Exception ignored) {
             }
-            open();
         } finally {
+            open();
             unlockExclusive();
         }
     }
@@ -192,17 +190,6 @@ public class DatabaseImpl<T> implements Database<T> {
         lock.writeLock().unlock();
     }
 
-    @Override
-    public void renameSeries(String fromId, String toId) {
-        lockConcurrent();
-        try {
-            File oldDir = Utils.getSeriesDir(baseDir, fromId);
-            renameSeries(oldDir, toId);
-        } finally {
-            unlockConcurrent();
-        }
-    }
-
     public void renameSeries(File oldDir, String toId) {
         lockConcurrent();
         try {
@@ -275,71 +262,11 @@ public class DatabaseImpl<T> implements Database<T> {
     }
 
     @Override
-    public void query(String seriesId, long fromTs, long toTs, boolean reverse, final QueryCallback<T> cb) {
-        query(seriesId, fromTs, toTs, Integer.MAX_VALUE, reverse, cb);
-    }
-
-    @Override
     public void query(String seriesId, long fromTs, long toTs, int limit, boolean reverse, final QueryCallback<T> cb) {
         lockConcurrent();
         try {
             Series<T> series = getSeries(seriesId);
             series.query(fromTs, toTs, limit, reverse, new CallbackWrapper(cb));
-        } catch (IOException e) {
-            throw new EtsdbException(e);
-        } finally {
-            unlockConcurrent();
-        }
-    }
-
-    @Override
-    public void wideQuery(String seriesId, long fromTs, long toTs, int limit, boolean reverse, WideQueryCallback<T> cb) {
-        lockConcurrent();
-        try {
-            Series<T> series = getSeries(seriesId);
-            series.wideQuery(fromTs, toTs, limit, reverse, new WideCallbackWrapper(cb));
-        } catch (IOException e) {
-            throw new EtsdbException(e);
-        } finally {
-            unlockConcurrent();
-        }
-    }
-
-    @Override
-    public void multiQuery(List<String> seriesIds, long fromTs, long toTs, final QueryCallback<T> cb) {
-        lockConcurrent();
-        try {
-            TimeRange range = getTimeRange(seriesIds);
-            if (range == null) {
-                return;
-            }
-
-            // Because the toTs in a query is exclusive, we need to add 1 to the "to" in the range.
-            range.setTo(range.getTo() + 1);
-
-            range = range.intersection(fromTs, toTs);
-
-            Sorter<MultiQueryInfo<T>> scans = new Sorter<>(MQI_COMPARATOR);
-            for (String seriesId : seriesIds) {
-                Series<T> series = getSeries(seriesId);
-                MultiQueryInfo<T> mqi = series.multiQueryOpen(range.getFrom(), range.getTo());
-                if (mqi.next()) {
-                    scans.add(mqi);
-                }
-            }
-
-            CallbackWrapper cw = new CallbackWrapper(cb);
-
-            Sortable<MultiQueryInfo<T>> smqi;
-            MultiQueryInfo<T> mqi;
-            while ((smqi = scans.pop()) != null) {
-                mqi = smqi.getValue();
-                cw.sample(mqi.getSeriesId(), mqi.getTs(), mqi.getData());
-
-                if (mqi.next()) {
-                    scans.add(smqi);
-                }
-            }
         } catch (IOException e) {
             throw new EtsdbException(e);
         } finally {
@@ -416,18 +343,6 @@ public class DatabaseImpl<T> implements Database<T> {
     @Override
     public long availableSpace() {
         return baseDir.getUsableSpace();
-    }
-
-    @Override
-    public TimeRange getTimeRange(String... seriesId) {
-        lockConcurrent();
-        try {
-            List<String> ids = new ArrayList<>();
-            Collections.addAll(ids, seriesId);
-            return getTimeRange(ids);
-        } finally {
-            unlockConcurrent();
-        }
     }
 
     @Override
@@ -523,23 +438,13 @@ public class DatabaseImpl<T> implements Database<T> {
 
                 System.gc();
 
-                // Write a clean indicator into the database properties, so that we know a corruption check isn't
-                // necessary upon next start.
+                // Write a clean indicator into the database properties, so
+                // that we know a corruption check isn't necessary upon next
+                // start.
                 getProperties().setBoolean("clean", true);
             }
         } finally {
             unlockExclusive();
-        }
-    }
-
-    void closeShards() {
-        lockConcurrent();
-        try {
-            for (Series<T> series : getSerieses()) {
-                series.close();
-            }
-        } finally {
-            unlockConcurrent();
         }
     }
 
@@ -644,72 +549,6 @@ public class DatabaseImpl<T> implements Database<T> {
         }
     }
 
-    /**
-     * NOTE: backups do not include values in write caches!
-     */
-    @Override
-    public void backup(String filename) throws IOException {
-        lockExclusive();
-
-        FileOutputStream out = null;
-        ZipOutputStream zip = null;
-        try {
-            // Zip up all files two directory levels down from the base dir.
-            out = new FileOutputStream(filename);
-            zip = new ZipOutputStream(out);
-
-            int relativity = baseDir.getPath().length() + 1;
-
-            File[] files1 = baseDir.listFiles();
-            if (files1 != null) {
-                for (File file1 : files1) {
-                    if (file1.isDirectory()) {
-                        File[] files2 = file1.listFiles();
-                        if (files2 != null) {
-                            for (File file2 : files2) {
-                                if (file1.isDirectory()) {
-                                    // This is where the shard files are, including data and meta files.
-                                    File[] shards = file2.listFiles();
-                                    if (shards != null) {
-                                        for (File shardFile : shards) {
-                                            if (shardFile.isFile()) {
-                                                addZipEntry(shardFile, zip, relativity);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Add in the properties file.
-            addZipEntry(getProperties().getFile(), zip, relativity);
-        } finally {
-            Utils.closeQuietly(zip);
-            Utils.closeQuietly(out);
-            unlockExclusive();
-        }
-    }
-
-    private void addZipEntry(File file, ZipOutputStream zip, int relativity) throws IOException {
-        String name = file.getPath().substring(relativity);
-
-        ZipEntry e = new ZipEntry(name);
-        zip.putNextEntry(e);
-
-        FileInputStream in = null;
-        try {
-            in = new FileInputStream(file);
-            StreamUtils.transfer(in, zip);
-        } finally {
-            Utils.closeQuietly(in);
-        }
-
-        zip.closeEntry();
-    }
-
     //
     //
     // Monitors
@@ -717,11 +556,6 @@ public class DatabaseImpl<T> implements Database<T> {
     @Override
     public int getWritesPerSecond() {
         return writesPerSecond.getEventCounts()[0] / 5;
-    }
-
-    @Override
-    public void setWritesPerSecondHandler(Handler<Integer> handler) {
-        writesPerSecond.setHandler(handler);
     }
 
     @Override
@@ -858,6 +692,13 @@ public class DatabaseImpl<T> implements Database<T> {
         openShards.setHandler(handler);
     }
 
+    private String sanitizeSeriesId(String seriesId) {
+        if (seriesId.startsWith("/")) {
+            return seriesId.substring(1);
+        }
+        return seriesId;
+    }
+
     class CallbackWrapper implements RawQueryCallback {
 
         private final QueryCallback<T> cb;
@@ -872,45 +713,6 @@ public class DatabaseImpl<T> implements Database<T> {
             if (t != null) {
                 cb.sample(seriesId, ts, t);
             }
-        }
-    }
-
-    private String sanitizeSeriesId(String seriesId) {
-        if (seriesId.startsWith("/")) {
-            return seriesId.substring(1);
-        }
-        return seriesId;
-    }
-
-    class WideCallbackWrapper implements RawWideQueryCallback {
-
-        private final WideQueryCallback<T> cb;
-
-        public WideCallbackWrapper(WideQueryCallback<T> cb) {
-            this.cb = cb;
-        }
-
-        @Override
-        public void preQuery(String seriesId, long ts, ByteArrayBuilder b) {
-            cb.preQuery(seriesId, ts, serializer.fromByteArray(b, ts));
-        }
-
-        @Override
-        public void sample(String seriesId, long ts, ByteArrayBuilder b) {
-            cb.sample(seriesId, ts, serializer.fromByteArray(b, ts));
-        }
-
-        @Override
-        public void postQuery(String seriesId, long ts, ByteArrayBuilder b) {
-            cb.postQuery(seriesId, ts, serializer.fromByteArray(b, ts));
-        }
-    }
-
-    class MultiQueryInfoComparator implements Comparator<MultiQueryInfo<T>> {
-
-        @Override
-        public int compare(MultiQueryInfo<T> m1, MultiQueryInfo<T> m2) {
-            return Utils.compareLong(m1.getTs(), m2.getTs());
         }
     }
 }

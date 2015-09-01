@@ -1,7 +1,5 @@
 package org.etsdb.util;
 
-import org.vertx.java.core.Handler;
-
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
@@ -12,7 +10,6 @@ public class EventHistogram {
     private final int[] buckets;
     private final AtomicLong lastTime = new AtomicLong();
 
-    private Handler<Integer> handler;
     private int position;
 
     public EventHistogram(int bucketSize, int buckets) {
@@ -31,10 +28,6 @@ public class EventHistogram {
             Thread.sleep(random.nextInt(100));
         }
         System.out.println(Arrays.toString(ec.getEventCounts()));
-    }
-
-    public void setHandler(Handler<Integer> handler) {
-        this.handler = handler;
     }
 
     public void hit() {
@@ -67,11 +60,6 @@ public class EventHistogram {
             this.position = ((this.position + 1) % this.buckets.length);
             this.buckets[this.position] = 0;
             diff--;
-        }
-
-        Handler<Integer> handler = this.handler;
-        if (handler != null) {
-            handler.handle(getEventCounts(false)[0] / 5);
         }
     }
 }

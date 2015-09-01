@@ -23,21 +23,13 @@ import java.util.List;
 public interface Database<T> {
     File getBaseDir();
 
-    void renameSeries(String fromId, String toId);
-
     void write(String seriesId, long ts, T value);
 
     void query(String seriesId, long fromTs, long toTs, final QueryCallback<T> cb);
 
     void query(String seriesId, long fromTs, long toTs, int limit, final QueryCallback<T> cb);
 
-    void query(String seriesId, long fromTs, long toTs, boolean reverse, final QueryCallback<T> cb);
-
     void query(String seriesId, long fromTs, long toTs, int limit, boolean reverse, final QueryCallback<T> cb);
-
-    void wideQuery(String seriesId, long fromTs, long toTs, int limit, boolean reverse, final WideQueryCallback<T> cb);
-
-    void multiQuery(List<String> seriesIds, long fromTs, long toTs, final QueryCallback<T> cb);
 
     long count(String seriesId, long fromTs, long toTs);
 
@@ -47,8 +39,6 @@ public interface Database<T> {
 
     long availableSpace();
 
-    TimeRange getTimeRange(String... seriesId);
-
     TimeRange getTimeRange(List<String> seriesIds);
 
     long delete(String seriesId, long fromTs, long toTs);
@@ -56,14 +46,9 @@ public interface Database<T> {
     void purge(String seriesId, long toTs);
 
     /**
-     * ??? There are potential concurrency problems with this method, since we do not actually lock Series objects.
-     * This should only be run when there is certainty that no writes or queries will be run at the same time.
-     *
-     * @param seriesId
+     * @param seriesId Series to delete
      */
     void deleteSeries(String seriesId);
-
-    void backup(String filename) throws IOException;
 
     void close() throws IOException;
 
@@ -72,8 +57,6 @@ public interface Database<T> {
     // Metrics
     //
     int getWritesPerSecond();
-
-    void setWritesPerSecondHandler(Handler<Integer> handler);
 
     long getWriteCount();
 
