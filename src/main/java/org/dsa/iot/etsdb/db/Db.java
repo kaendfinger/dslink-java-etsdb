@@ -1,5 +1,6 @@
 package org.dsa.iot.etsdb.db;
 
+import org.dsa.iot.commons.ParameterizedAction;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
 import org.dsa.iot.dslink.node.actions.Action;
@@ -19,8 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.vertx.java.core.Handler;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -164,16 +164,9 @@ public class Db extends Database {
                     }
                 }
 
-                EditSettingsHandler handler = new EditSettingsHandler();
-
-                Action a = new Action(getProvider().dbPermission(), handler);
+                EditSettingsHandler a = new EditSettingsHandler();
                 a.addParameter(nameParam);
                 a.addParameter(pathParam);
-
-                handler.setAction(a);
-                handler.setNameParam(nameParam);
-                handler.setPathParam(pathParam);
-
                 b.setAction(a);
             }
             b.build();
@@ -211,15 +204,9 @@ public class Db extends Database {
                     }
                 }
 
-                PurgeSettingsHandler handler = new PurgeSettingsHandler();
-                Action a = new Action(getProvider().dbPermission(), handler);
+                PurgeSettingsHandler a = new PurgeSettingsHandler();
                 a.addParameter(purgeParam);
                 a.addParameter(spaceParam);
-
-                handler.setAction(a);
-                handler.setPurgeParam(purgeParam);
-                handler.setDiskParam(spaceParam);
-
                 b.setAction(a);
             }
             Node node = b.build();
@@ -487,73 +474,42 @@ public class Db extends Database {
         }
     }
 
-    private class EditSettingsHandler implements Handler<ActionResult> {
+    private class EditSettingsHandler extends ParameterizedAction {
 
-        private Action action;
-        private Parameter nameParam;
-        private Parameter pathParam;
-
-        void setAction(Action a) {
-            this.action = a;
-        }
-
-        void setPathParam(Parameter p) {
-            this.pathParam = p;
-        }
-
-        void setNameParam(Parameter p ) {
-            this.nameParam = p;
+        public EditSettingsHandler() {
+            super(getProvider().dbPermission());
         }
 
         @Override
-        public void handle(ActionResult event) {
-            Node node = event.getNode();
+        public void handle(ActionResult event, Map<String, Value> params) {
+            Node node = event.getNode().getParent();
 
-            Value vName = event.getParameter("Name", ValueType.STRING);
-            node.getParent().setDisplayName(vName.getString());
-            nameParam.setDefaultValue(vName);
+            Value vName = params.get("Name");
+            node.setDisplayName(vName.getString());
 
-            Value vPath = event.getParameter("Path", ValueType.STRING);
-            String path = node.getParent().getConfig("path").getString();
+            Value vPath = params.get("Path");
+            String path = node.getConfig("path").getString();
             if (!path.equals(vPath.getString())) {
-                node.getParent().setConfig("path", vPath);
+                node.setConfig("path", vPath);
                 db.move(new File(vPath.getString()));
-                pathParam.setDefaultValue(vPath);
             }
-
-            List<Parameter> params = new ArrayList<>();
-            params.add(nameParam);
-            params.add(pathParam);
-            action.setParams(params);
         }
     }
 
-    private class PurgeSettingsHandler implements Handler<ActionResult> {
+    private class PurgeSettingsHandler extends ParameterizedAction {
 
-        private Action action;
-        private Parameter purgeParam;
-        private Parameter diskParam;
-
-        void setAction(Action a) {
-            this.action = a;
-        }
-
-        void setPurgeParam(Parameter p) {
-            this.purgeParam = p;
-        }
-
-        void setDiskParam(Parameter p) {
-            this.diskParam = p;
+        public PurgeSettingsHandler() {
+            super(getProvider().dbPermission());
         }
 
         @Override
-        public void handle(ActionResult event) {
+        public void handle(ActionResult event, Map<String, Value> params) {
             Node node = event.getNode();
 
-            Value vP = event.getParameter("Auto Purge", ValueType.BOOL);
+            Value vP = params.get("Auto Purge");
             node.setRoConfig("ap", vP);
 
-            Value vD = event.getParameter("Disk Space Remaining", ValueType.NUMBER);
+            Value vD = params.get("Disk Space Remaining");
             if (vD.getNumber().intValue() < 0) {
                 vD.set(0);
             } else if (vD.getNumber().intValue() > 100) {
@@ -562,15 +518,7 @@ public class Db extends Database {
             node.setRoConfig("dsr", vD);
 
             purgeable = vP.getBool();
-            purgeParam.setDefaultValue(vP);
-
             setDiskSpaceRemaining(vD.getNumber().intValue());
-            diskParam.setDefaultValue(vD);
-
-            List<Parameter> params = new ArrayList<>();
-            params.add(purgeParam);
-            params.add(diskParam);
-            action.setParams(params);
         }
     }
 }
