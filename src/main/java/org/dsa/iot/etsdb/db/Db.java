@@ -86,6 +86,7 @@ public class Db extends Database {
                 handler.handle(new QueryData(value, ts));
             }
         });
+        handler.handle(null);
     }
 
     @Override
