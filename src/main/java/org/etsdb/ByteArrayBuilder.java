@@ -42,10 +42,6 @@ public class ByteArrayBuilder {
         return buffer.clone();
     }
 
-    public int getWriteOffset() {
-        return writeOffset;
-    }
-
     public int getReadOffset() {
         return readOffset;
     }
@@ -68,11 +64,6 @@ public class ByteArrayBuilder {
         buffer[writeOffset++] = b;
     }
 
-    public void put(int b) {
-        ensureCapacity(1);
-        buffer[writeOffset++] = (byte) b;
-    }
-
     public void put(byte[] src) {
         put(src, 0, src.length);
     }
@@ -86,12 +77,6 @@ public class ByteArrayBuilder {
     public void putBoolean(boolean b) {
         ensureCapacity(1);
         buffer[writeOffset++] = (byte) (b ? 0x1 : 0x0);
-    }
-
-    public void putChar(char c) {
-        ensureCapacity(2);
-        buffer[writeOffset++] = (byte) (c >> 8);
-        buffer[writeOffset++] = (byte) c;
     }
 
     public void putShort(short s) {
@@ -131,7 +116,7 @@ public class ByteArrayBuilder {
     /**
      * String serialization with optimization for short strings.
      *
-     * @param s
+     * @param s String
      */
     public void putString(String s) {
         byte[] bytes = null;
@@ -238,11 +223,6 @@ public class ByteArrayBuilder {
         return !(buffer[readOffset++] == 0);
     }
 
-    public char getChar() {
-        ensureAvailable(2);
-        return makeChar(buffer[readOffset++], buffer[readOffset++]);
-    }
-
     public short getShort() {
         ensureAvailable(2);
         return makeShort(buffer[readOffset++], buffer[readOffset++]);
@@ -315,11 +295,6 @@ public class ByteArrayBuilder {
         return buffer[readOffset + index];
     }
 
-    public int readByte(int index) {
-        ensureAvailable(index + 1);
-        return buffer[readOffset + index] & 0xff;
-    }
-
     public void read(int index, byte[] dst) {
         read(index, dst, 0, dst.length);
     }
@@ -327,42 +302,6 @@ public class ByteArrayBuilder {
     public void read(int index, byte[] dst, int offset, int length) {
         ensureAvailable(index + length);
         System.arraycopy(buffer, index + readOffset, dst, offset, length);
-    }
-
-    public boolean readBoolean(int index) {
-        ensureAvailable(index + 1);
-        return !(buffer[readOffset + index] == 0);
-    }
-
-    public char readChar(int index) {
-        ensureAvailable(index + 2);
-        return makeChar(buffer[readOffset + index], buffer[readOffset + index + 1]);
-    }
-
-    public short readShort(int index) {
-        ensureAvailable(index + 2);
-        return makeShort(buffer[readOffset + index], buffer[readOffset + index + 1]);
-    }
-
-    public int readInt(int index) {
-        ensureAvailable(index + 4);
-        return makeInt(buffer[readOffset + index], buffer[readOffset + index + 1], buffer[readOffset + index + 2],
-                buffer[readOffset + index + 3]);
-    }
-
-    public long readLong(int index) {
-        ensureAvailable(index + 8);
-        return makeLong(buffer[readOffset + index], buffer[readOffset + index + 1], buffer[readOffset + index + 2],
-                buffer[readOffset + index + 3], buffer[readOffset + index + 4], buffer[readOffset + index + 5],
-                buffer[readOffset + index + 6], buffer[readOffset + index + 7]);
-    }
-
-    public float readFloat(int index) {
-        return Float.intBitsToFloat(readInt(index));
-    }
-
-    public double readDouble(int index) {
-        return Double.doubleToLongBits(readLong(index));
     }
 
     //
@@ -386,10 +325,6 @@ public class ByteArrayBuilder {
             System.arraycopy(buffer, 0, b, 0, buffer.length);
             buffer = b;
         }
-    }
-
-    private char makeChar(byte b1, byte b2) {
-        return (char) (((b1 & 0xff) << 8) | (b2 & 0xff));
     }
 
     private short makeShort(byte b1, byte b2) {

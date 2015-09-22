@@ -35,16 +35,8 @@ class Janitor implements Runnable {
         this.handler = handler;
     }
 
-    int getFileLockCheckInterval() {
-        return fileLockCheckInterval;
-    }
-
     void setFileLockCheckInterval(int fileLockCheckInterval) {
         this.fileLockCheckInterval = fileLockCheckInterval;
-    }
-
-    int getFlushInterval() {
-        return flushInterval;
     }
 
     void setFlushInterval(int flushInterval) {

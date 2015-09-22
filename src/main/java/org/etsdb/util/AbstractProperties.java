@@ -22,10 +22,6 @@ public abstract class AbstractProperties {
         this.description = description;
     }
 
-    public String getDescription() {
-        return this.description;
-    }
-
     public String getString(String key) {
         String s = getStringImpl(key);
         if (s == null) {
@@ -62,26 +58,6 @@ public abstract class AbstractProperties {
 
     protected abstract String getStringImpl(String paramString);
 
-    public String getString(String key, String defaultValue) {
-        String value = getString(key);
-        if ("".equals(value)) {
-            return defaultValue;
-        }
-        return value;
-    }
-
-    public String[] getStringArray(String key, String delimiter, String[] defaultValue) {
-        String value = getString(key);
-        if ("".equals(value)) {
-            return defaultValue;
-        }
-        return value.split(delimiter);
-    }
-
-    public int getInt(String key) {
-        return Integer.parseInt(getString(key));
-    }
-
     public int getInt(String key, int defaultValue) {
         String value = getString(key);
         if ("".equals(value)) {
@@ -93,27 +69,6 @@ public abstract class AbstractProperties {
             this.LOG.warn("(" + this.description + ") Can't parse int from properties key: " + key + ", value=" + value);
         }
         return defaultValue;
-    }
-
-    public long getLong(String key) {
-        return Long.parseLong(getString(key));
-    }
-
-    public long getLong(String key, long defaultValue) {
-        String value = getString(key);
-        if ("".equals(value)) {
-            return defaultValue;
-        }
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            this.LOG.warn("(" + this.description + ") Can't parse long from properties key: " + key + ", value=" + value);
-        }
-        return defaultValue;
-    }
-
-    public boolean getBoolean(String key) {
-        return "true".equalsIgnoreCase(getString(key));
     }
 
     public boolean getBoolean(String key, boolean defaultValue) {
@@ -128,23 +83,6 @@ public abstract class AbstractProperties {
             return false;
         }
         this.LOG.warn("(" + this.description + ") Can't parse boolean from properties key: " + key + ", value=" + value);
-        return defaultValue;
-    }
-
-    public double getDouble(String key) {
-        return Double.parseDouble(getString(key));
-    }
-
-    public double getDouble(String key, double defaultValue) {
-        String value = getString(key);
-        if ("".equals(value)) {
-            return defaultValue;
-        }
-        try {
-            return Double.parseDouble(value);
-        } catch (NumberFormatException e) {
-            this.LOG.warn("(" + this.description + ") Can't parse double from properties key: " + key + ", value=" + value);
-        }
         return defaultValue;
     }
 }

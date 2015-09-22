@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class CorruptionScanner {
@@ -114,9 +115,7 @@ class CorruptionScanner {
         List<File> result = new ArrayList<>();
         File[] files = dir.listFiles(new SuffixFilter(suffix));
         if (files != null) {
-            for (File f : files) {
-                result.add(f);
-            }
+            Collections.addAll(result, files);
         }
         return result;
     }
@@ -164,6 +163,7 @@ class CorruptionScanner {
         return -1;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void fixCorruption(File data, long badRowposition) throws IOException {
         ChecksumInputStream in = null;
         try {

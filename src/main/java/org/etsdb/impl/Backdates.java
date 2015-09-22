@@ -76,7 +76,7 @@ class Backdates {
 
             List<Backdate> shardInserts = new ArrayList<>();
             while (true) {
-                Backdate first = null;
+                Backdate first;
 
                 synchronized (backdates) {
                     if (backdates.isEmpty()) {

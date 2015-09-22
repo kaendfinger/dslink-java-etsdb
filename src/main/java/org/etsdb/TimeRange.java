@@ -11,11 +11,6 @@ public class TimeRange {
         to = -Long.MAX_VALUE;
     }
 
-    public TimeRange(long from, long to) {
-        this.from = from;
-        this.to = to;
-    }
-
     public long getFrom() {
         return from;
     }
@@ -50,35 +45,14 @@ public class TimeRange {
         return result;
     }
 
-    public TimeRange intersection(TimeRange that) {
-        return intersection(that.from, that.to);
-    }
-
-    public TimeRange intersection(long from, long to) {
-        TimeRange result = new TimeRange();
-
-        if (this.to < from || to < this.from)
-            return result;
-
-        result.setFrom(from < this.from ? this.from : from);
-        result.setTo(to > this.to ? this.to : to);
-        return result;
-    }
-
-    public String toSimpleString() {
-        return "TimeRange [from=" + from + ", to=" + to + "]";
-    }
-
     @Override
     public String toString() {
         if (isUndefined())
             return "TimeRange [undefined]";
-        StringBuilder sb = new StringBuilder();
-        sb.append("TimeRange [from=");
-        sb.append(Utils.prettyTimestamp(from));
-        sb.append(", to=");
-        sb.append(Utils.prettyTimestamp(to));
-        sb.append("]");
-        return sb.toString();
+        return "TimeRange [from=" +
+                Utils.prettyTimestamp(from) +
+                ", to=" +
+                Utils.prettyTimestamp(to) +
+                "]";
     }
 }

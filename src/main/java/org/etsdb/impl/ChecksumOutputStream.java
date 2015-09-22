@@ -3,7 +3,6 @@ package org.etsdb.impl;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 
 class ChecksumOutputStream extends OutputStream {
     private final OutputStream delegate;
@@ -11,11 +10,11 @@ class ChecksumOutputStream extends OutputStream {
     private byte sum;
 
     ChecksumOutputStream(OutputStream delegate) {
-        if (delegate instanceof BufferedOutputStream)
+        if (delegate instanceof BufferedOutputStream) {
             this.delegate = delegate;
-        else
-            // TODO this buffer can be tested with different sizes. Default is 8K.
+        } else {
             this.delegate = new BufferedOutputStream(delegate, 128000); // 128 Kb
+        }
     }
 
     void writeSum() throws IOException {
@@ -34,11 +33,6 @@ class ChecksumOutputStream extends OutputStream {
         for (int i = 0; i < len; i++)
             sum += b[i + off];
         delegate.write(b, off, len);
-    }
-
-    void write(ByteBuffer bb) throws IOException {
-        while (bb.remaining() > 0)
-            write(bb.get());
     }
 
     @Override

@@ -15,9 +15,7 @@ public class PendingWriteList {
     }
 
     public boolean expired(long runtime) {
-        if (expiryTime == 0)
-            return false;
-        return expiryTime <= runtime;
+        return expiryTime != 0 && expiryTime <= runtime;
     }
 
     public void add(PendingWrite sample) {

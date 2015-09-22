@@ -4,33 +4,24 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.dsa.iot.etsdb.utils.atomic.NotifyAtomicInteger;
 import org.dsa.iot.etsdb.utils.atomic.NotifyAtomicLong;
 import org.etsdb.*;
-import org.etsdb.impl.Sorter.Sortable;
 import org.etsdb.maint.DBUpgrade;
 import org.etsdb.util.DirectoryUtils;
 import org.etsdb.util.EventHistogram;
-import org.etsdb.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vertx.java.core.Handler;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
- * TODO implement locking of database TODO implement automatic closing of neglected series
- * <p>
  *
  * @param <T> the class of data that is written to this database.
  * @author Matthew Lohbihler
- *         <p>
  */
 public class DatabaseImpl<T> implements Database<T> {
 

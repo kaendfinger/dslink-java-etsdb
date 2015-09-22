@@ -1,9 +1,10 @@
 package org.etsdb.impl;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-class ChecksumDataInput implements ChecksumInput {
+class ChecksumDataInput implements ChecksumInput, Closeable {
     private final RandomAccessFile delegate;
 
     private byte sum;
@@ -56,7 +57,8 @@ class ChecksumDataInput implements ChecksumInput {
         return eof;
     }
 
-    void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         delegate.close();
     }
 }

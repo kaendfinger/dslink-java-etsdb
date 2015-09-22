@@ -3,6 +3,7 @@ package org.etsdb;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("unused")
 public class DbConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(DbConfig.class);

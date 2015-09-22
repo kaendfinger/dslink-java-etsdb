@@ -217,13 +217,12 @@ class DataShard {
                 }
 
                 if (scanInfo.getOffset() < fromOffset)
-                    ; // Ignore. Before time range
+                    continue; // Ignore. Before time range
                 else if (scanInfo.getOffset() >= toOffset) {
                     break; // After time range. Done.
-                } else {
-                    cb.sample(seriesId, Utils.getTimestamp(shardId, scanInfo.getOffset()), scanInfo.getData());
-                    count++;
                 }
+                cb.sample(seriesId, Utils.getTimestamp(shardId, scanInfo.getOffset()), scanInfo.getData());
+                count++;
             }
         } finally {
             Utils.closeQuietly(in);
@@ -249,19 +248,18 @@ class DataShard {
                     p = cache.getList().get(i);
 
                     if (p.getOffset() >= toOffset)
-                        ; // Ignore. After time range.
+                        continue; // Ignore. After time range.
                     else if (p.getOffset() < fromOffset) {
                         // Before time range. Because cache rows are always after the file rows, we know that there
                         // will be nothing of interest in the file. To prevent a file read, set the limit to 0.
                         limit = 0;
                         break;
-                    } else {
-                        // Found a cache row of interest. Use the scan info's builder in the callback.
-                        scanInfo.getData().clear();
-                        scanInfo.getData().put(p.getData());
-                        cb.sample(seriesId, Utils.getTimestamp(shardId, p.getOffset()), scanInfo.getData());
-                        count++;
                     }
+                    // Found a cache row of interest. Use the scan info's builder in the callback.
+                    scanInfo.getData().clear();
+                    scanInfo.getData().put(p.getData());
+                    cb.sample(seriesId, Utils.getTimestamp(shardId, p.getOffset()), scanInfo.getData());
+                    count++;
                 }
             }
 
@@ -288,12 +286,11 @@ class DataShard {
                         }
 
                         if (scanInfo.getOffset() < fromOffset)
-                            ; // Ignore. Before time range
+                            continue; // Ignore. Before time range
                         else if (scanInfo.getOffset() >= toOffset) {
                             break; // After time range. Done.
-                        } else {
-                            positions.push(position);
                         }
+                        positions.push(position);
                     }
                 } finally {
                     Utils.closeQuietly(in);
@@ -408,8 +405,6 @@ class DataShard {
         // Delete the old file and copy the temp to replace it.
         try {
             Utils.deleteWithRetry(dataFile);
-        } catch (IOException e) {
-            throw e;
         } finally {
             Utils.renameWithRetry(tempFile, dataFile);
         }
@@ -488,8 +483,6 @@ class DataShard {
         // Delete the old file and copy the temp to replace it.
         try {
             Utils.deleteWithRetry(dataFile);
-        } catch (IOException e) {
-            throw e;
         } finally {
             Utils.renameWithRetry(tempFile, dataFile);
         }
@@ -590,26 +583,6 @@ class DataShard {
             metaBuf = null;
             metaClosures.incrementAndGet();
         }
-    }
-
-    //
-    //
-    // Multi-query
-    //
-    ChecksumInputStream multiQueryOpen() throws IOException {
-        if (closed) {
-            throw new IOException("DataShard already closed");
-        }
-        return new ChecksumInputStream(dataFile);
-    }
-
-    void multiQueryNext(ChecksumInput in, ScanInfo scanInfo) throws IOException {
-        readSample(in, scanInfo);
-    }
-
-    void multiQueryClose(ChecksumInputStream in) {
-        Utils.closeQuietly(in);
-        updateLastAccess();
     }
 
     //

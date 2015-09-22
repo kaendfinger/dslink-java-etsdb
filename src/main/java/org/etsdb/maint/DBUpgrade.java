@@ -22,7 +22,7 @@ public class DBUpgrade {
         while (true) {
             // Convert the schema version to the class name convention. This simply means replacing dots with
             // underscores and prefixing 'Upgrade' and this package.
-            String upgradeClassname = "org.etsdb.maint.Upgrade" + Integer.toString(currentVersion);
+            String upgradeClassname = "org.etsdb.maint.Upgrade" + currentVersion;
 
             // See if there is a class with this name.
             Class<?> clazz = null;

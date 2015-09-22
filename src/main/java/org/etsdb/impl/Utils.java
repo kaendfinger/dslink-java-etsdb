@@ -1,6 +1,5 @@
 package org.etsdb.impl;
 
-import org.etsdb.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -285,19 +284,5 @@ public class Utils {
         byte[] b = new byte[len];
         System.arraycopy(data, off, b, 0, len);
         return b;
-    }
-
-    public static void copy(File from, File to) throws IOException {
-        FileInputStream in = null;
-        FileOutputStream out = null;
-
-        try {
-            in = new FileInputStream(from);
-            out = new FileOutputStream(to);
-            StreamUtils.transfer(in, out);
-        } finally {
-            closeQuietly(in);
-            closeQuietly(out);
-        }
     }
 }

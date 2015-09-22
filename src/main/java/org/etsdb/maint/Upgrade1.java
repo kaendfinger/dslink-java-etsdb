@@ -2,6 +2,7 @@ package org.etsdb.maint;
 
 import java.io.File;
 
+@SuppressWarnings("unused")
 public class Upgrade1 extends BaseUpgrade {
     @Override
     void upgrade() throws Exception {

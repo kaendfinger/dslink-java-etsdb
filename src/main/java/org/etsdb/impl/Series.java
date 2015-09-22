@@ -67,10 +67,6 @@ class Series<T> {
         }
     }
 
-    void write(long ts, byte[] data) throws IOException {
-        write(ts, data, 0, data.length);
-    }
-
     private void write(long ts, byte[] data, int off, int len) throws IOException {
         DataShard shard = getShard(ts, true);
         try {
@@ -129,49 +125,6 @@ class Series<T> {
                 shard.unlockRead();
             }
         }
-    }
-
-    void wideQuery(long fromTs, long toTs, int limit, boolean reverse, RawWideQueryCallback cb) throws IOException {
-        // TODO
-        //        // Determine the shard range to query
-        //        long fromShard = Utils.getShardId(fromTs);
-        //        long toShard = Utils.getShardId(toTs);
-        //        synchronized (shardLookup) {
-        //            if (fromShard < minShard)
-        //                fromShard = minShard;
-        //            if (toShard > maxShard)
-        //                toShard = maxShard;
-        //        }
-        //
-        //        // Iterate through the shards.
-        //        for (long sid = fromShard; sid <= toShard; sid++) {
-        //            long shardId = sid;
-        //            if (reverse)
-        //                shardId = toShard - sid + fromShard;
-        //
-        //            // Get a handle on the current shard.
-        //            DataShard shard = getShardById(shardId, false);
-        //            try {
-        //                long fromOffset = Utils.getOffsetInShard(shardId, fromTs);
-        //                long toOffset = Utils.getOffsetInShard(shardId, toTs);
-        //
-        //                int count;
-        //                if (reverse)
-        //                    count = shard.queryReverse(fromOffset, toOffset, limit, cb);
-        //                else
-        //                    count = shard.query(fromOffset, toOffset, limit, cb);
-        //
-        //                if (limit != Integer.MAX_VALUE) {
-        //                    limit -= count;
-        //                    if (limit <= 0)
-        //                        // We found all the rows we need. Break from the shard loop.
-        //                        break;
-        //                }
-        //            }
-        //            finally {
-        //                shard.unlockRead();
-        //            }
-        //        }
     }
 
     TimeRange getTimeRange() throws IOException {
@@ -334,32 +287,6 @@ class Series<T> {
             shards = new ArrayList<>(shardLookup.values());
         }
         return shards;
-    }
-
-    //
-    //
-    // Multi-query
-    //
-    MultiQueryInfo<T> multiQueryOpen(long fromTs, long toTs) {
-        // Determine the shard range to query
-        long fromShard = Utils.getShardId(fromTs);
-        long toShard = Utils.getShardId(toTs);
-        synchronized (shardLookup) {
-            if (fromShard < minShard)
-                fromShard = minShard;
-            if (toShard > maxShard)
-                toShard = maxShard;
-        }
-
-        return new MultiQueryInfo<>(this, fromTs, toTs, fromShard, toShard);
-    }
-
-    DataShard multiQueryOpenShard(long shardId) throws IOException {
-        return getShardById(shardId, false);
-    }
-
-    void multiQueryCloseShard(DataShard shard) {
-        shard.unlockRead();
     }
 
     //
