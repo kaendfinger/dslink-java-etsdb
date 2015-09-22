@@ -1,7 +1,5 @@
-# Runtime
-subprojects/requester/run
-subprojects/responder/run
-subprojects/dual/run
+# Misc
+.DS_Store
 
 # Gradle
 .gradle
