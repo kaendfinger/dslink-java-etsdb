@@ -15,12 +15,6 @@
   "bugs": {
     "url": "https://github.com/IOT-DSA/dslink-java-etsdb/issues"
   },
-  "onUpdate": {
-    "delete": [
-      "bin",
-      "lib"
-    ]
-  },
   "configs": {
     "name": {
       "type": "string",
