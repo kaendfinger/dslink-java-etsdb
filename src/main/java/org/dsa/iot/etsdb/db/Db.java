@@ -10,6 +10,8 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.NodeUtils;
 import org.dsa.iot.dslink.util.Objects;
+import org.dsa.iot.dslink.util.handler.CompleteHandler;
+import org.dsa.iot.dslink.util.handler.Handler;
 import org.dsa.iot.historian.database.Database;
 import org.dsa.iot.historian.utils.QueryData;
 import org.etsdb.DatabaseFactory;
@@ -17,7 +19,6 @@ import org.etsdb.QueryCallback;
 import org.etsdb.impl.DatabaseImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.Handler;
 
 import java.io.File;
 import java.util.Map;
@@ -79,14 +80,14 @@ public class Db extends Database {
     public void query(String path,
                       long from,
                       long to,
-                      final Handler<QueryData> handler) {
+                      final CompleteHandler<QueryData> handler) {
         db.query(path, from, to, new QueryCallback<Value>() {
             @Override
             public void sample(String seriesId, long ts, Value value) {
                 handler.handle(new QueryData(value, ts));
             }
         });
-        handler.handle(null);
+        handler.complete();
     }
 
     @Override

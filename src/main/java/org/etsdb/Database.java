@@ -1,6 +1,6 @@
 package org.etsdb;
 
-import org.vertx.java.core.Handler;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 import java.io.File;
 import java.io.IOException;

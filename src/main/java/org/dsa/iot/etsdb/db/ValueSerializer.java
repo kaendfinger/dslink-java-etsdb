@@ -2,10 +2,10 @@ package org.dsa.iot.etsdb.db;
 
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.json.JsonArray;
+import org.dsa.iot.dslink.util.json.JsonObject;
 import org.etsdb.ByteArrayBuilder;
 import org.etsdb.Serializer;
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
 
 /**
  * @author Samuel Grenier

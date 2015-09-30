@@ -10,12 +10,12 @@ import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.StringUtils;
+import org.dsa.iot.dslink.util.handler.Handler;
 import org.dsa.iot.historian.database.Database;
 import org.dsa.iot.historian.database.DatabaseProvider;
 import org.dsa.iot.historian.database.Watch;
 import org.dsa.iot.historian.utils.TimeParser;
 import org.etsdb.impl.DatabaseImpl;
-import org.vertx.java.core.Handler;
 
 /**
  * @author Samuel Grenier

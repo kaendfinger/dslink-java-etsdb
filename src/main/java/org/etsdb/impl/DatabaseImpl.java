@@ -1,6 +1,7 @@
 package org.etsdb.impl;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.dsa.iot.dslink.util.handler.Handler;
 import org.dsa.iot.etsdb.utils.atomic.NotifyAtomicInteger;
 import org.dsa.iot.etsdb.utils.atomic.NotifyAtomicLong;
 import org.etsdb.*;
@@ -9,7 +10,6 @@ import org.etsdb.util.DirectoryUtils;
 import org.etsdb.util.EventHistogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.Handler;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,8 +1,8 @@
 package org.etsdb.impl;
 
+import org.dsa.iot.dslink.util.handler.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.Handler;
 
 import java.io.IOException;
 
