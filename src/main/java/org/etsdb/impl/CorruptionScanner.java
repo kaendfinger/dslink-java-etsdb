@@ -32,20 +32,38 @@ class CorruptionScanner {
     }
 
     void scan() throws IOException {
-        File[] subdirs = db.getBaseDir().listFiles();
+        scan(db.getBaseDir());
+    }
+
+    private void scan(File parent) throws IOException {
+        File[] subdirs = parent.listFiles();
         if (subdirs != null) {
             for (File subdir : subdirs) {
                 File[] seriesDirs = subdir.listFiles();
                 if (seriesDirs != null) {
                     for (File seriesDir : seriesDirs) {
                         checkSeriesDir(seriesDir);
+                        deepScan(seriesDir);
                     }
                 }
             }
         }
     }
 
+    private void deepScan(File parent) throws IOException {
+        File[] subdirs = parent.listFiles();
+        if (subdirs != null) {
+            for (File subdir : subdirs) {
+                checkSeriesDir(subdir);
+                deepScan(subdir);
+            }
+        }
+    }
+
     private void checkSeriesDir(File seriesDir) throws IOException {
+        if (!seriesDir.isDirectory()) {
+            return;
+        }
         String seriesId = seriesDir.getName();
 
         // temp files.
