@@ -1,5 +1,6 @@
 package org.dsa.iot.etsdb.db;
 
+import io.netty.util.CharsetUtil;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.json.JsonArray;
@@ -17,6 +18,7 @@ public class ValueSerializer extends Serializer<Value> {
     public static final byte STRING = 2;
     public static final byte MAP = 3;
     public static final byte ARRAY = 4;
+    public static final byte BINARY = 5;
 
     public static final byte BYTE = 0;
     public static final byte SHORT = 1;
@@ -62,10 +64,13 @@ public class ValueSerializer extends Serializer<Value> {
             b.putString(val.getString());
         } else if (type.compare(ValueType.MAP)) {
             b.put(MAP);
-            b.putString(val.getMap().encode());
+            b.putString(new String(val.getMap().encode(), CharsetUtil.UTF_8));
         } else if (type.compare(ValueType.ARRAY)) {
             b.put(ARRAY);
-            b.putString(val.getArray().encode());
+            b.putString(new String(val.getArray().encode(), CharsetUtil.UTF_8));
+        } else if (type.compare(ValueType.BINARY)) {
+            b.put(BINARY);
+            b.put(val.getBinary());
         }
     }
 
@@ -78,45 +83,57 @@ public class ValueSerializer extends Serializer<Value> {
         Value value;
         int type = b.get();
         switch (type) {
-            case NUMBER:
+            case NUMBER: {
                 type = b.get();
                 switch (type) {
                     case BYTE:
                         value = new Value(b.get());
                         break;
                     case SHORT:
-                        value =  new Value(b.getShort());
+                        value = new Value(b.getShort());
                         break;
                     case INT:
-                        value =  new Value(b.getInt());
+                        value = new Value(b.getInt());
                         break;
                     case LONG:
-                        value =  new Value(b.getLong());
+                        value = new Value(b.getLong());
                         break;
                     case FLOAT:
-                        value =  new Value(b.getFloat());
+                        value = new Value(b.getFloat());
                         break;
                     case DOUBLE:
-                        value =  new Value(b.getDouble());
+                        value = new Value(b.getDouble());
                         break;
                     default:
                         throw new RuntimeException("Unsupported type: " + type);
                 }
                 break;
-            case BOOL:
-                value =  new Value(b.getBoolean());
+            }
+            case BOOL: {
+                value = new Value(b.getBoolean());
                 break;
-            case STRING:
-                value =  new Value(b.getString());
+            }
+            case STRING: {
+                value = new Value(b.getString());
                 break;
-            case MAP:
+            }
+            case MAP: {
                 JsonObject obj = new JsonObject(b.getString());
-                value =  new Value(obj);
+                value = new Value(obj);
                 break;
-            case ARRAY:
+            }
+            case ARRAY: {
                 JsonArray array = new JsonArray(b.getString());
-                value =  new Value(array);
+                value = new Value(array);
                 break;
+            }
+            case BINARY: {
+                int avail = b.getAvailable();
+                byte[] bytes = new byte[avail];
+                b.get(bytes, 0, avail);
+                value = new Value(bytes);
+                break;
+            }
             default:
                 throw new RuntimeException("Unsupported type: " + type);
         }

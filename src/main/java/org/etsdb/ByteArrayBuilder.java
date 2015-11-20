@@ -287,24 +287,6 @@ public class ByteArrayBuilder {
     }
 
     //
-    // 
-    // Read
-    //
-    public byte read(int index) {
-        ensureAvailable(index + 1);
-        return buffer[readOffset + index];
-    }
-
-    public void read(int index, byte[] dst) {
-        read(index, dst, 0, dst.length);
-    }
-
-    public void read(int index, byte[] dst, int offset, int length) {
-        ensureAvailable(index + length);
-        System.arraycopy(buffer, index + readOffset, dst, offset, length);
-    }
-
-    //
     //
     // Private
     //
