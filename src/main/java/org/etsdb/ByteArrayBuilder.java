@@ -1,5 +1,6 @@
 package org.etsdb;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.etsdb.impl.Input;
 import org.etsdb.impl.Utils;
 
@@ -33,13 +34,20 @@ public class ByteArrayBuilder {
         buffer = new byte[initialSize];
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
+    public ByteArrayBuilder(byte[] buffer) {
+        this.buffer = buffer;
+        this.writeOffset = buffer.length;
+    }
+
     public void clear() {
         writeOffset = 0;
         readOffset = 0;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public byte[] getBuffer() {
-        return buffer.clone();
+        return buffer;
     }
 
     public int getReadOffset() {

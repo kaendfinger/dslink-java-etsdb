@@ -12,6 +12,8 @@ import org.dsa.iot.dslink.util.NodeUtils;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.handler.CompleteHandler;
 import org.dsa.iot.dslink.util.handler.Handler;
+import org.dsa.iot.etsdb.serializer.ByteData;
+import org.dsa.iot.etsdb.serializer.ValueSerializer;
 import org.dsa.iot.historian.database.Database;
 import org.dsa.iot.historian.utils.QueryData;
 import org.etsdb.DatabaseFactory;
@@ -36,7 +38,7 @@ public class Db extends Database {
     private final String path;
     private final File fPath;
 
-    private DatabaseImpl<Value> db;
+    private DatabaseImpl<ByteData> db;
     private boolean purgeable;
     private long diskSpaceRemaining;
     private ScheduledFuture<?> diskUsedMonitor;
@@ -50,7 +52,7 @@ public class Db extends Database {
         this.fPath = new File(path);
     }
 
-    public DatabaseImpl<Value> getDb() {
+    public DatabaseImpl<ByteData> getDb() {
         return db;
     }
 
@@ -73,7 +75,9 @@ public class Db extends Database {
 
     @Override
     public void write(String path, Value value, long ts) {
-        db.write(path, ts, value);
+        ByteData d = new ByteData();
+        d.setValue(value);
+        db.write(path, ts, d);
     }
 
     @Override
@@ -81,10 +85,10 @@ public class Db extends Database {
                       long from,
                       long to,
                       final CompleteHandler<QueryData> handler) {
-        db.query(path, from, to, new QueryCallback<Value>() {
+        db.query(path, from, to, new QueryCallback<ByteData>() {
             @Override
-            public void sample(String seriesId, long ts, Value value) {
-                handler.handle(new QueryData(value, ts));
+            public void sample(String seriesId, long ts, ByteData data) {
+                handler.handle(data);
             }
         });
         handler.complete();
@@ -94,11 +98,11 @@ public class Db extends Database {
     public QueryData queryFirst(String path) {
         final QueryData data = new QueryData();
         db.query(path, Long.MIN_VALUE,
-                Long.MAX_VALUE, 1, new QueryCallback<Value>() {
+                Long.MAX_VALUE, 1, new QueryCallback<ByteData>() {
                     @Override
-                    public void sample(String seriesId, long ts, Value value) {
+                    public void sample(String seriesId, long ts, ByteData b) {
                         data.setTimestamp(ts);
-                        data.setValue(value);
+                        data.setValue(b.getValue());
                     }
                 });
         return data;
@@ -108,11 +112,11 @@ public class Db extends Database {
     public QueryData queryLast(String path) {
         final QueryData data = new QueryData();
         db.query(path, Long.MIN_VALUE,
-                Long.MAX_VALUE, 1, true, new QueryCallback<Value>() {
+                Long.MAX_VALUE, 1, true, new QueryCallback<ByteData>() {
                     @Override
-                    public void sample(String seriesId, long ts, Value value) {
+                    public void sample(String seriesId, long ts, ByteData b) {
                         data.setTimestamp(ts);
-                        data.setValue(value);
+                        data.setValue(b.getValue());
                     }
                 });
         return data;

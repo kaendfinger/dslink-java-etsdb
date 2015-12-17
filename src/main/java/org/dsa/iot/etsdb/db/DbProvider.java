@@ -11,6 +11,7 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.StringUtils;
 import org.dsa.iot.dslink.util.handler.Handler;
+import org.dsa.iot.etsdb.serializer.ByteData;
 import org.dsa.iot.historian.database.Database;
 import org.dsa.iot.historian.database.DatabaseProvider;
 import org.dsa.iot.historian.database.Watch;
@@ -102,7 +103,7 @@ public class DbProvider extends DatabaseProvider {
 
                     String path = node.getName();
                     path = path.replaceAll("%2F", "/");
-                    DatabaseImpl<Value> db = ((Db) database).getDb();
+                    DatabaseImpl<ByteData> db = ((Db) database).getDb();
                     db.deleteSeries(path);
                 }
             });
@@ -127,7 +128,7 @@ public class DbProvider extends DatabaseProvider {
 
                     String path = node.getName();
                     path = path.replaceAll("%2F", "/");
-                    DatabaseImpl<Value> db = ((Db) database).getDb();
+                    DatabaseImpl<ByteData> db = ((Db) database).getDb();
                     db.delete(path, fromTs, toTs);
                 }
             });

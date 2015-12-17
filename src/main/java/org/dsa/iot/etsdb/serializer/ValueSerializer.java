@@ -1,17 +1,15 @@
-package org.dsa.iot.etsdb.db;
+package org.dsa.iot.etsdb.serializer;
 
 import io.netty.util.CharsetUtil;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
-import org.dsa.iot.dslink.util.json.JsonArray;
-import org.dsa.iot.dslink.util.json.JsonObject;
 import org.etsdb.ByteArrayBuilder;
 import org.etsdb.Serializer;
 
 /**
  * @author Samuel Grenier
  */
-public class ValueSerializer extends Serializer<Value> {
+public class ValueSerializer extends Serializer<ByteData> {
 
     public static final byte NUMBER = 0;
     public static final byte BOOL = 1;
@@ -28,11 +26,12 @@ public class ValueSerializer extends Serializer<Value> {
     public static final byte DOUBLE = 5;
 
     @Override
-    public void toByteArray(ByteArrayBuilder b, Value val, long ts) {
-        if (val == null) {
+    public void toByteArray(ByteArrayBuilder b, ByteData data, long ts) {
+        if (data == null) {
             return;
         }
 
+        Value val = data.getValue();
         ValueType type = val.getType();
         if (type.compare(ValueType.NUMBER)) {
             b.put(NUMBER);
@@ -75,70 +74,20 @@ public class ValueSerializer extends Serializer<Value> {
     }
 
     @Override
-    public Value fromByteArray(ByteArrayBuilder b, long ts) {
+    public ByteData fromByteArray(ByteArrayBuilder b, long ts) {
         if (b.getAvailable() <= 0) {
             return null;
         }
 
-        Value value;
-        int type = b.get();
-        switch (type) {
-            case NUMBER: {
-                type = b.get();
-                switch (type) {
-                    case BYTE:
-                        value = new Value(b.get());
-                        break;
-                    case SHORT:
-                        value = new Value(b.getShort());
-                        break;
-                    case INT:
-                        value = new Value(b.getInt());
-                        break;
-                    case LONG:
-                        value = new Value(b.getLong());
-                        break;
-                    case FLOAT:
-                        value = new Value(b.getFloat());
-                        break;
-                    case DOUBLE:
-                        value = new Value(b.getDouble());
-                        break;
-                    default:
-                        throw new RuntimeException("Unsupported type: " + type);
-                }
-                break;
-            }
-            case BOOL: {
-                value = new Value(b.getBoolean());
-                break;
-            }
-            case STRING: {
-                value = new Value(b.getString());
-                break;
-            }
-            case MAP: {
-                JsonObject obj = new JsonObject(b.getString());
-                value = new Value(obj);
-                break;
-            }
-            case ARRAY: {
-                JsonArray array = new JsonArray(b.getString());
-                value = new Value(array);
-                break;
-            }
-            case BINARY: {
-                int avail = b.getAvailable();
-                byte[] bytes = new byte[avail];
-                b.get(bytes, 0, avail);
-                value = new Value(bytes);
-                break;
-            }
-            default:
-                throw new RuntimeException("Unsupported type: " + type);
+        ByteData data = new ByteData();
+        data.setType(b.get());
+        data.setTimestamp(ts);
+        {
+            byte[] a = new byte[b.getAvailable()];
+            b.get(a, 0, b.getAvailable());
+            data.setBytes(a);
         }
 
-        value.setTime(ts);
-        return value;
+        return data;
     }
 }

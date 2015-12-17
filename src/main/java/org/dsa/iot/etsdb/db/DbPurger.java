@@ -1,7 +1,7 @@
 package org.dsa.iot.etsdb.db;
 
-import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.util.Objects;
+import org.dsa.iot.etsdb.serializer.ByteData;
 import org.etsdb.TimeRange;
 import org.etsdb.impl.DatabaseImpl;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class DbPurger {
                         if (!running) {
                             break;
                         }
-                        DatabaseImpl<Value> realDb = db.getDb();
+                        DatabaseImpl<ByteData> realDb = db.getDb();
 
                         List<String> series = realDb.getSeriesIds();
                         TimeRange range = realDb.getTimeRange(series);
