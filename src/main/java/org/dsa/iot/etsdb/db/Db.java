@@ -85,6 +85,10 @@ public class Db extends Database {
                       long from,
                       long to,
                       final CompleteHandler<QueryData> handler) {
+        if (db == null) {
+            handler.complete();
+        }
+        
         db.query(path, from, to, new QueryCallback<ByteData>() {
             @Override
             public void sample(String seriesId, long ts, ByteData data) {
@@ -97,6 +101,11 @@ public class Db extends Database {
     @Override
     public QueryData queryFirst(String path) {
         final QueryData data = new QueryData();
+        
+        if (db == null) {
+            return null;
+        }
+        
         db.query(path, Long.MIN_VALUE,
                 Long.MAX_VALUE, 1, new QueryCallback<ByteData>() {
                     @Override
@@ -111,6 +120,11 @@ public class Db extends Database {
     @Override
     public QueryData queryLast(String path) {
         final QueryData data = new QueryData();
+        
+        if (db == null) {
+            return null;
+        }
+        
         db.query(path, Long.MIN_VALUE,
                 Long.MAX_VALUE, 1, true, new QueryCallback<ByteData>() {
                     @Override
