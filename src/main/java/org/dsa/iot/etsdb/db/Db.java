@@ -87,6 +87,7 @@ public class Db extends Database {
                       final CompleteHandler<QueryData> handler) {
         if (db == null) {
             handler.complete();
+            return;
         }
         
         db.query(path, from, to, new QueryCallback<ByteData>() {
