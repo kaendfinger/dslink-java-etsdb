@@ -36,7 +36,10 @@ public class ValueSerializer extends Serializer<ByteData> {
         if (type.compare(ValueType.NUMBER)) {
             b.put(NUMBER);
             Number number = val.getNumber();
-            if (number instanceof Byte) {
+            if (number == null) {
+                b.put(BYTE);
+                b.put((byte) 0);
+            } else if (number instanceof Byte) {
                 b.put(BYTE);
                 b.put(number.byteValue());
             } else if (number instanceof Short) {
