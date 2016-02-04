@@ -413,7 +413,10 @@ public class DatabaseImpl<T> implements Database<T> {
         try {
             if (!closed) {
                 if (backdates != null) {
-                    backdates.close();
+                    try {
+                        backdates.close();
+                    } catch (Exception ignored) {
+                    }
                 }
 
                 closed = true;
