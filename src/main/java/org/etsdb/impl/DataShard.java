@@ -163,7 +163,7 @@ class DataShard {
             ensureLatestTime();
 
             long offset = Utils.getSampleOffset(ts);
-            if (ts > latestTime) {
+            if (ts >= latestTime) {
                 // Append
                 if (cache == null) {
                     writeImmediate(ts, offset, data, off, len);
