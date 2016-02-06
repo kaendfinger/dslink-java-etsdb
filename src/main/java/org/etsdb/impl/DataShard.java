@@ -162,8 +162,9 @@ class DataShard {
         try {
             ensureLatestTime();
 
+            ts = System.currentTimeMillis();
             long offset = Utils.getSampleOffset(ts);
-            if (ts >= latestTime) {
+            //if (ts >= latestTime) {
                 // Append
                 if (cache == null) {
                     writeImmediate(ts, offset, data, off, len);
@@ -178,12 +179,12 @@ class DataShard {
                         cache.add(new PendingWrite(offset, data, off, len));
                     }
                 }
-            } else {
+            /*} else {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Backdate: seriesId=" + seriesId + ", ts=" + ts + ", latestTime=" + latestTime);
                 }
                 db.addBackdate(new Backdate(seriesId, shardId, offset, data, off, len));
-            }
+            }*/
         } finally {
             updateLastAccess();
         }
