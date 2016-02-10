@@ -448,7 +448,8 @@ public class Db extends Database {
                     double size = db.getDatabaseSize();
                     size /= 1048576;
                     Value prev = node.getValue();
-                    if (prev != null && prev.getNumber().doubleValue() != size) {
+                    if (prev != null
+                            && Math.abs(size - prev.getNumber().doubleValue()) < .0000001) {
                         node.setValue(new Value(size));
                     }
 
@@ -479,7 +480,8 @@ public class Db extends Database {
                     double size = db.availableSpace();
                     size /= 1048576;
                     Value prev = node.getValue();
-                    if (prev != null && prev.getNumber().doubleValue() != size) {
+                    if (prev != null
+                            && Math.abs(size - prev.getNumber().doubleValue()) < .0000001) {
                         node.setValue(new Value(size));
                     }
 
