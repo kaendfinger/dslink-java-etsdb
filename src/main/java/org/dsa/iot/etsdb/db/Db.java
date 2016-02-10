@@ -264,7 +264,10 @@ public class Db extends Database {
                 @Override
                 public void run() {
                     int wps = db.getWritesPerSecond();
-                    node.setValue(new Value(wps));
+                    Value prev = node.getValue();
+                    if (prev != null && prev.getNumber().intValue() != wps) {
+                        node.setValue(new Value(wps));
+                    }
                 }
             }, 1, 1, TimeUnit.SECONDS);
         }
@@ -279,7 +282,10 @@ public class Db extends Database {
             db.setWriteCountHandler(new Handler<Long>() {
                 @Override
                 public void handle(Long event) {
-                    node.setValue(new Value(event));
+                    Value prev = node.getValue();
+                    if (prev != null && prev.getNumber().longValue() != event) {
+                        node.setValue(new Value(event));
+                    }
                 }
             });
         }
@@ -441,7 +447,10 @@ public class Db extends Database {
                 public void run() {
                     double size = db.getDatabaseSize();
                     size /= 1048576;
-                    node.setValue(new Value(size));
+                    Value prev = node.getValue();
+                    if (prev != null && prev.getNumber().doubleValue() != size) {
+                        node.setValue(new Value(size));
+                    }
 
                 }
             }, 0, 5, TimeUnit.SECONDS);
@@ -469,7 +478,10 @@ public class Db extends Database {
                 public void run() {
                     double size = db.availableSpace();
                     size /= 1048576;
-                    node.setValue(new Value(size));
+                    Value prev = node.getValue();
+                    if (prev != null && prev.getNumber().doubleValue() != size) {
+                        node.setValue(new Value(size));
+                    }
 
                 }
             }, 0, 5, TimeUnit.SECONDS);
