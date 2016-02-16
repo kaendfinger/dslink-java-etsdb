@@ -162,7 +162,6 @@ class DataShard {
         try {
             ensureLatestTime();
 
-            ts = System.currentTimeMillis();
             long offset = Utils.getSampleOffset(ts);
             //if (ts >= latestTime) {
                 // Append
