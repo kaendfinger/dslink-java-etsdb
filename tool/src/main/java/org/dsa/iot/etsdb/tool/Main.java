@@ -6,6 +6,7 @@ import org.dsa.iot.etsdb.serializer.ValueSerializer;
 import org.etsdb.Database;
 import org.etsdb.DatabaseFactory;
 import org.etsdb.Serializer;
+import org.etsdb.impl.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,11 @@ public class Main {
     private static final Random RANDOM = new Random();
 
     public static void main(String[] args) throws Exception {
+        String prop = System.getProperty("etsdb.timestamp_bit_shift", "30");
+        int bits = Integer.parseInt(prop);
+        LOGGER.info("etsdb.timestamp_bit_shift = {}", bits);
+        Utils.setShardBits(bits);
+
         File file = new File("test_db");
         Serializer<ByteData> ser = new ValueSerializer();
         Database<ByteData> db = DatabaseFactory.createDatabase(file, ser);

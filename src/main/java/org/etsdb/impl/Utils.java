@@ -13,11 +13,15 @@ public class Utils {
 
     public static final int MAX_DATA_LENGTH = 8192; // 8K
     private static final Logger logger = LoggerFactory.getLogger(Utils.class.getName());
-    private static final int SHARD_BITS = 30;
+    private static int SHARD_BITS = 30;
     // File IO retries
     private static final int FILE_IO_RETRIES = 30;
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
     private static final Date date = new Date(0);
+
+    public static void setShardBits(int bits) {
+        SHARD_BITS = bits;
+    }
 
     public static File getSeriesDir(File baseDir, String seriesId) {
         return new File(baseDir, getShardDirectory(seriesId) + File.separator + seriesId);
