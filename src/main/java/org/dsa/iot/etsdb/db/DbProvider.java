@@ -1,5 +1,6 @@
 package org.dsa.iot.etsdb.db;
 
+import org.dsa.iot.dslink.DSLinkHandler;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
 import org.dsa.iot.dslink.node.Permission;
@@ -17,6 +18,9 @@ import org.dsa.iot.historian.database.DatabaseProvider;
 import org.dsa.iot.historian.database.Watch;
 import org.dsa.iot.historian.utils.TimeParser;
 import org.etsdb.impl.DatabaseImpl;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author Samuel Grenier
@@ -80,6 +84,9 @@ public class DbProvider extends DatabaseProvider {
     @Override
     public Database createDb(Node node) {
         String path = node.getConfig("path").getString();
+        DSLinkHandler h = node.getLink().getHandler();
+        Path p = Paths.get(h.getWorkingDir().getAbsolutePath());
+        path = p.resolve(path).toString();
         return new Db(node.getDisplayName(), path, this);
     }
 
