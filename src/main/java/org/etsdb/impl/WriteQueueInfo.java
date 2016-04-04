@@ -27,15 +27,17 @@ class WriteQueueInfo {
         discardQueueSize = config.getQueueDiscardQueueSize();
     }
 
-    public long getExpiryTime() {
-        if (expireMinimum == expireMaximum)
+    long getExpiryTime() {
+        if (expireMinimum == expireMaximum) {
             return System.currentTimeMillis() + expireMinimum;
+        }
         return System.currentTimeMillis() + expireMinimum + random.nextInt(expireMaximum - expireMinimum);
     }
 
-    public int getShardQueueSize() {
-        if (shardQueueSizeMinimum == shardQueueSizeMaximum)
+    int getShardQueueSize() {
+        if (shardQueueSizeMinimum == shardQueueSizeMaximum) {
             return shardQueueSizeMinimum;
+        }
         return shardQueueSizeMinimum + random.nextInt(shardQueueSizeMaximum - shardQueueSizeMinimum);
     }
 }

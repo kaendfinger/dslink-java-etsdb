@@ -23,35 +23,40 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Matthew Lohbihler
  */
 public class DatabaseImpl<T> implements Database<T> {
+    static final Logger LOGGER = LoggerFactory.getLogger(DatabaseImpl.class.getName());
 
     public static final int VERSION = 2;
-    static final Logger logger = LoggerFactory.getLogger(DatabaseImpl.class.getName());
+
     final Serializer<T> serializer;
-    int shardStalePeriod;
-    // Open shards
-    int maxOpenFiles;
     final NotifyAtomicInteger openShards = new NotifyAtomicInteger();
     final NotifyAtomicInteger openFiles = new NotifyAtomicInteger();
-    // Write queue
-    WriteQueueInfo queueInfo;
+
     final NotifyAtomicLong flushCount = new NotifyAtomicLong();
     final AtomicLong forcedClose = new AtomicLong();
     final NotifyAtomicLong flushForced = new NotifyAtomicLong();
     final NotifyAtomicLong flushExpired = new NotifyAtomicLong();
     final NotifyAtomicLong flushLimit = new NotifyAtomicLong();
+
+    int shardStalePeriod;
+    // Open shards
+    int maxOpenFiles;
+    // Write queue
+    WriteQueueInfo queueInfo;
     // Configuration
-    private File baseDir;
+
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private Janitor janitor;
     private final Map<String, Series<T>> seriesLookup = new HashMap<>();
-    // Backdates
-    private Backdates backdates;
     // Monitors
     private final EventHistogram writesPerSecond = new EventHistogram(5000, 2);
     private final NotifyAtomicLong writeCount = new NotifyAtomicLong();
     private final NotifyAtomicLong backdateCount = new NotifyAtomicLong();
     // Runtime
     private final DbConfig config;
+
+    private File baseDir;
+    private Janitor janitor;
+    // Backdates
+    private Backdates backdates;
     private boolean closed;
 
     public DatabaseImpl(File baseDir, Serializer<T> serializer, DbConfig config) {
@@ -71,6 +76,7 @@ public class DatabaseImpl<T> implements Database<T> {
             close();
         } catch (Exception ignored) {
         }
+
         lockExclusive();
         try {
             if (!this.baseDir.renameTo(newLoc)) {
@@ -92,7 +98,7 @@ public class DatabaseImpl<T> implements Database<T> {
         closed = false;
         if (!baseDir.exists()) {
             if (!baseDir.mkdirs()) {
-                logger.error("Failed to create baseDir: {}", baseDir.getParent());
+                LOGGER.error("Failed to create baseDir: {}", baseDir.getParent());
             }
         }
 
@@ -100,7 +106,7 @@ public class DatabaseImpl<T> implements Database<T> {
         DBUpgrade upgrade = new DBUpgrade(this);
         upgrade.checkForUpgrade();
 
-        logger.info("Database started at {}", baseDir.getAbsolutePath());
+        LOGGER.info("Database started at {}", baseDir.getAbsolutePath());
 
         shardStalePeriod = config.getShardStalePeriod();
         if (config.isIgnoreBackdates()) {
@@ -120,7 +126,7 @@ public class DatabaseImpl<T> implements Database<T> {
             // Clean up the file structure.
             long start = System.currentTimeMillis();
             Utils.deleteEmptyDirs(baseDir);
-            logger.info("Empty dir delete took " + (System.currentTimeMillis() - start) + "ms");
+            LOGGER.info("Empty dir delete took " + (System.currentTimeMillis() - start) + "ms");
         }
 
         DBProperties props = getProperties();
@@ -129,14 +135,14 @@ public class DatabaseImpl<T> implements Database<T> {
                 try {
                     long start = System.currentTimeMillis();
                     new CorruptionScanner(this).scan();
-                    logger.info("Corruption scan took " + (System.currentTimeMillis() - start) + "ms");
+                    LOGGER.info("Corruption scan took " + (System.currentTimeMillis() - start) + "ms");
                 } catch (IOException e) {
                     throw new EtsdbException(e);
                 }
             }
         } else {
             if (config.isRunCorruptionScan()) {
-                logger.info("Corruption scan skipped because the database is marked as clean");
+                LOGGER.info("Corruption scan skipped because the database is marked as clean");
             }
             props.setBoolean("clean", false);
         }
@@ -147,7 +153,7 @@ public class DatabaseImpl<T> implements Database<T> {
                     try {
                         close();
                     } catch (IOException e) {
-                        logger.warn("Exception during close", e);
+                        LOGGER.warn("Exception during close", e);
                     }
                 }
             });
@@ -197,7 +203,7 @@ public class DatabaseImpl<T> implements Database<T> {
 
             if (!newDir.getParentFile().mkdirs()) {
                 String dir = newDir.getParent();
-                logger.error("Failed to create directory: {}", dir);
+                LOGGER.error("Failed to create directory: {}", dir);
             }
             try {
                 Utils.renameWithRetry(oldDir, newDir);
@@ -380,7 +386,7 @@ public class DatabaseImpl<T> implements Database<T> {
                 try {
                     Utils.delete(seriesDir);
                 } catch (IOException e) {
-                    logger.warn("Error while deleting series " + seriesId, e);
+                    LOGGER.warn("Error while deleting series " + seriesId, e);
                 }
             }
         } finally {
@@ -499,7 +505,7 @@ public class DatabaseImpl<T> implements Database<T> {
             // If the size of the queue still exceeds the max size, start force flushing random series until it doesn't.
             if (useQueue()) {
                 if (queueInfo.queueSize.get() > queueInfo.maxQueueSize) {
-                    logger.info("Max queue size exceeded. Writing lists to reduce.");
+                    LOGGER.info("Max queue size exceeded. Writing lists to reduce.");
                     while (!serieses.isEmpty()) {
                         if (queueInfo.queueSize.get() <= queueInfo.maxQueueSize) {
                             break;
@@ -513,7 +519,7 @@ public class DatabaseImpl<T> implements Database<T> {
 
                 int discards = queueInfo.recentDiscards.getAndSet(0);
                 if (discards > 0) {
-                    logger.warn("Discarded " + discards + " writes");
+                    LOGGER.warn("Discarded " + discards + " writes");
                 }
             }
 
@@ -651,11 +657,11 @@ public class DatabaseImpl<T> implements Database<T> {
         return seriesId;
     }
 
-    class CallbackWrapper implements RawQueryCallback {
+    private class CallbackWrapper implements RawQueryCallback {
 
         private final QueryCallback<T> cb;
 
-        public CallbackWrapper(QueryCallback<T> cb) {
+        CallbackWrapper(QueryCallback<T> cb) {
             this.cb = cb;
         }
 

@@ -73,80 +73,66 @@ public class Db extends Database {
         this.diskSpaceRemaining = totalSize * (space / 100);
     }
 
-    @Override
-    public void write(String path, Value value, long ts) {
+    @Override public void write(String path, Value value, long ts) {
         ByteData d = new ByteData();
         d.setValue(value);
         db.write(path, ts, d);
     }
 
-    @Override
-    public void query(String path,
-                      long from,
-                      long to,
-                      final CompleteHandler<QueryData> handler) {
+    @Override public void query(String path, long from, long to, final CompleteHandler<QueryData> handler) {
         if (db == null) {
             handler.complete();
             return;
         }
-        
+
         db.query(path, from, to, new QueryCallback<ByteData>() {
-            @Override
-            public void sample(String seriesId, long ts, ByteData data) {
+            @Override public void sample(String seriesId, long ts, ByteData data) {
                 handler.handle(data);
             }
         });
         handler.complete();
     }
 
-    @Override
-    public QueryData queryFirst(String path) {
+    @Override public QueryData queryFirst(String path) {
         final QueryData data = new QueryData();
-        
+
         if (db == null) {
             return null;
         }
-        
-        db.query(path, Long.MIN_VALUE,
-                Long.MAX_VALUE, 1, new QueryCallback<ByteData>() {
-                    @Override
-                    public void sample(String seriesId, long ts, ByteData b) {
-                        data.setTimestamp(ts);
-                        data.setValue(b.getValue());
-                    }
-                });
+
+        db.query(path, Long.MIN_VALUE, Long.MAX_VALUE, 1, new QueryCallback<ByteData>() {
+            @Override public void sample(String seriesId, long ts, ByteData b) {
+                data.setTimestamp(ts);
+                data.setValue(b.getValue());
+            }
+        });
         return data;
     }
 
-    @Override
-    public QueryData queryLast(String path) {
+    @Override public QueryData queryLast(String path) {
         final QueryData data = new QueryData();
-        
+
         if (db == null) {
             return null;
         }
-        
-        db.query(path, Long.MIN_VALUE,
-                Long.MAX_VALUE, 1, true, new QueryCallback<ByteData>() {
-                    @Override
-                    public void sample(String seriesId, long ts, ByteData b) {
-                        data.setTimestamp(ts);
-                        data.setValue(b.getValue());
-                    }
-                });
+
+        db.query(path, Long.MIN_VALUE, Long.MAX_VALUE, 1, true, new QueryCallback<ByteData>() {
+            @Override public void sample(String seriesId, long ts, ByteData b) {
+                data.setTimestamp(ts);
+                data.setValue(b.getValue());
+            }
+        });
         return data;
     }
 
-    @Override
-    protected void performConnect() throws Exception {
+    @Override protected void performConnect() throws Exception {
         File d = new File(path);
         ValueSerializer vs = new ValueSerializer();
         db = DatabaseFactory.createDatabase(d, vs);
         provider.getPurger().addDb(this);
     }
 
-    @Override
-    public void close() throws Exception {
+    @Override public void close() throws Exception {
         provider.getPurger().removeDb(this);
         try {
             db.close();
@@ -157,8 +143,7 @@ public class Db extends Database {
         }
     }
 
-    @Override
-    public void initExtensions(final Node parent) {
+    @Override public void initExtensions(final Node parent) {
         {
             NodeBuilder b = parent.createChild("edit");
             b.setDisplayName("Edit");
@@ -240,14 +225,12 @@ public class Db extends Database {
             NodeBuilder b = parent.createChild("dap");
             b.setDisplayName("Delete and Purge");
             b.setSerializable(false);
-            b.setAction(new Action(getProvider().dbPermission(),
-                    new Handler<ActionResult>() {
-                        @Override
-                        public void handle(ActionResult event) {
-                            getProvider().deleteDb(parent);
-                            deleteDirectory(fPath);
-                        }
-                    }));
+            b.setAction(new Action(getProvider().dbPermission(), new Handler<ActionResult>() {
+                @Override public void handle(ActionResult event) {
+                    getProvider().deleteDb(parent);
+                    deleteDirectory(fPath);
+                }
+            }));
             b.build();
         }
 
@@ -261,8 +244,7 @@ public class Db extends Database {
 
             ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
             wpsMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
+                @Override public void run() {
                     int wps = db.getWritesPerSecond();
                     Value prev = node.getValue();
                     if (prev != null && prev.getNumber().intValue() != wps) {
@@ -280,8 +262,7 @@ public class Db extends Database {
             final Node node = b.build();
             db.setWriteCount(node.getValue().getNumber().longValue());
             db.setWriteCountHandler(new Handler<Long>() {
-                @Override
-                public void handle(Long event) {
+                @Override public void handle(Long event) {
                     Value prev = node.getValue();
                     if (prev != null && prev.getNumber().longValue() != event) {
                         node.setValue(new Value(event));
@@ -298,8 +279,7 @@ public class Db extends Database {
             final Node node = b.build();
             db.setFlushCount(node.getValue().getNumber().longValue());
             db.setFlushCountHandler(new Handler<Long>() {
-                @Override
-                public void handle(Long event) {
+                @Override public void handle(Long event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -313,8 +293,7 @@ public class Db extends Database {
             final Node node = b.build();
             node.setSerializable(false);
             db.setQueueSizeHandler(new Handler<Integer>() {
-                @Override
-                public void handle(Integer event) {
+                @Override public void handle(Integer event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -328,8 +307,7 @@ public class Db extends Database {
             final Node node = b.build();
             db.setFlushForced(node.getValue().getNumber().longValue());
             db.setFlushForcedHandler(new Handler<Long>() {
-                @Override
-                public void handle(Long event) {
+                @Override public void handle(Long event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -343,8 +321,7 @@ public class Db extends Database {
             final Node node = b.build();
             db.setFlushExpired(node.getValue().getNumber().longValue());
             db.setFlushExpiredHandler(new Handler<Long>() {
-                @Override
-                public void handle(Long event) {
+                @Override public void handle(Long event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -358,8 +335,7 @@ public class Db extends Database {
             final Node node = b.build();
             db.setFlushLimit(node.getValue().getNumber().longValue());
             db.setFlushLimitHandler(new Handler<Long>() {
-                @Override
-                public void handle(Long event) {
+                @Override public void handle(Long event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -373,8 +349,7 @@ public class Db extends Database {
             final Node node = b.build();
             node.setSerializable(false);
             db.setLastFlushMillisHandler(new Handler<Integer>() {
-                @Override
-                public void handle(Integer event) {
+                @Override public void handle(Integer event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -388,8 +363,7 @@ public class Db extends Database {
             final Node node = b.build();
             db.setBackdateCount(node.getValue().getNumber().longValue());
             db.setBackdateCountHandler(new Handler<Long>() {
-                @Override
-                public void handle(Long event) {
+                @Override public void handle(Long event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -403,8 +377,7 @@ public class Db extends Database {
             final Node node = b.build();
             node.setSerializable(false);
             db.setOpenShardsHandler(new Handler<Integer>() {
-                @Override
-                public void handle(Integer event) {
+                @Override public void handle(Integer event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -418,8 +391,7 @@ public class Db extends Database {
             final Node node = b.build();
             node.setSerializable(false);
             db.setOpenFilesHandler(new Handler<Integer>() {
-                @Override
-                public void handle(Integer event) {
+                @Override public void handle(Integer event) {
                     node.setValue(new Value(event));
                 }
             });
@@ -443,13 +415,11 @@ public class Db extends Database {
 
             ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
             diskUsedMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
+                @Override public void run() {
                     double size = db.getDatabaseSize();
                     size /= 1048576;
                     Value prev = node.getValue();
-                    if (prev == null
-                            || Math.abs(size - prev.getNumber().doubleValue()) > .0001) {
+                    if (prev == null || Math.abs(size - prev.getNumber().doubleValue()) > .0001) {
                         node.setValue(new Value(size));
                     }
 
@@ -475,13 +445,11 @@ public class Db extends Database {
 
             ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
             diskFreeMonitor = stpe.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
+                @Override public void run() {
                     double size = db.availableSpace();
                     size /= 1048576;
                     Value prev = node.getValue();
-                    if (prev == null
-                            || Math.abs(size - prev.getNumber().doubleValue()) > .0001) {
+                    if (prev == null || Math.abs(size - prev.getNumber().doubleValue()) > .0001) {
                         node.setValue(new Value(size));
                     }
 
@@ -510,13 +478,11 @@ public class Db extends Database {
     }
 
     private class EditSettingsHandler extends ParameterizedAction {
-
-        public EditSettingsHandler() {
+        EditSettingsHandler() {
             super(getProvider().dbPermission());
         }
 
-        @Override
-        public void handle(ActionResult event, Map<String, Value> params) {
+        @Override public void handle(ActionResult event, Map<String, Value> params) {
             Node node = event.getNode().getParent();
 
             Value vName = params.get("Name");
@@ -532,13 +498,11 @@ public class Db extends Database {
     }
 
     private class PurgeSettingsHandler extends ParameterizedAction {
-
-        public PurgeSettingsHandler() {
+        PurgeSettingsHandler() {
             super(getProvider().dbPermission());
         }
 
-        @Override
-        public void handle(ActionResult event, Map<String, Value> params) {
+        @Override public void handle(ActionResult event, Map<String, Value> params) {
             Node node = event.getNode();
 
             Value vP = params.get("Auto Purge");

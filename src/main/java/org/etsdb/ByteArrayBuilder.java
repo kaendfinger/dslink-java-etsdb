@@ -90,6 +90,7 @@ public class ByteArrayBuilder {
 
     public void putInt(int i) {
         ensureCapacity(4);
+
         buffer[writeOffset++] = (byte) (i >> 24);
         buffer[writeOffset++] = (byte) (i >> 16);
         buffer[writeOffset++] = (byte) (i >> 8);
@@ -157,9 +158,9 @@ public class ByteArrayBuilder {
         // 000 = 1 byte
         //
         // This method is able to store string lengths up to 536870911 bytes.
-        if (bytes == null)
+        if (bytes == null) {
             buffer[writeOffset++] = (byte) 0x80;
-        else {
+        } else {
             if (bytes.length >= 0x200000) {
                 buffer[writeOffset++] = (byte) ((bytes.length >> 24) | 0x60);
                 buffer[writeOffset++] = (byte) (bytes.length >> 16);
@@ -311,10 +312,12 @@ public class ByteArrayBuilder {
 
         if (buffer.length < min) {
             int newLength = buffer.length << 1;
-            while (newLength < min)
+            while (newLength < min) {
                 newLength <<= 1;
-            if (newLength > Utils.MAX_DATA_LENGTH)
+            }
+            if (newLength > Utils.MAX_DATA_LENGTH) {
                 throw new RuntimeException("Data length can not exceed " + Utils.MAX_DATA_LENGTH);
+            }
             byte[] b = new byte[newLength];
             System.arraycopy(buffer, 0, b, 0, buffer.length);
             buffer = b;

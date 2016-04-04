@@ -210,9 +210,9 @@ class DataShard {
                     break;
                 }
 
-                if (scanInfo.getOffset() < fromOffset)
+                if (scanInfo.getOffset() < fromOffset) {
                     continue; // Ignore. Before time range
-                else if (scanInfo.getOffset() >= toOffset) {
+                } else if (scanInfo.getOffset() >= toOffset) {
                     break; // After time range. Done.
                 }
                 cb.sample(seriesId, Utils.getTimestamp(shardId, scanInfo.getOffset()), scanInfo.getData());
@@ -241,9 +241,9 @@ class DataShard {
                 for (int i = cache.getList().size() - 1; i >= 0; i--) {
                     p = cache.getList().get(i);
 
-                    if (p.getOffset() >= toOffset)
+                    if (p.getOffset() >= toOffset) {
                         continue; // Ignore. After time range.
-                    else if (p.getOffset() < fromOffset) {
+                    } else if (p.getOffset() < fromOffset) {
                         // Before time range. Because cache rows are always after the file rows, we know that there
                         // will be nothing of interest in the file. To prevent a file read, set the limit to 0.
                         limit = 0;
@@ -279,9 +279,9 @@ class DataShard {
                             break;
                         }
 
-                        if (scanInfo.getOffset() < fromOffset)
+                        if (scanInfo.getOffset() < fromOffset) {
                             continue; // Ignore. Before time range
-                        else if (scanInfo.getOffset() >= toOffset) {
+                        } else if (scanInfo.getOffset() >= toOffset) {
                             break; // After time range. Done.
                         }
                         positions.push(position);
@@ -439,8 +439,8 @@ class DataShard {
             readSample(in, scanInfo);
 
             while (true) {
-                if (scanInfo.isEof() && next == null) // All done.
-                {
+                // All done.
+                if (scanInfo.isEof() && next == null) {
                     break;
                 }
 

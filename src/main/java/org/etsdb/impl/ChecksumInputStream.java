@@ -26,10 +26,10 @@ class ChecksumInputStream extends InputStream implements ChecksumInput {
         }
     }
 
-    @Override
-    public boolean checkSum() throws IOException {
-        if (eof)
+    @Override public boolean checkSum() throws IOException {
+        if (eof) {
             return false;
+        }
 
         byte b = (byte) delegate.read();
         position++;
@@ -38,15 +38,15 @@ class ChecksumInputStream extends InputStream implements ChecksumInput {
         return match;
     }
 
-    @Override
-    public int read() throws IOException {
-        if (eof)
+    @Override public int read() throws IOException {
+        if (eof) {
             return -1;
+        }
 
         int i = delegate.read();
-        if (i == -1)
+        if (i == -1) {
             eof = true;
-        else {
+        } else {
             position++;
             sum += (byte) i;
         }
@@ -54,18 +54,19 @@ class ChecksumInputStream extends InputStream implements ChecksumInput {
         return i;
     }
 
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        if (eof)
+    @Override public int read(byte[] b, int off, int len) throws IOException {
+        if (eof) {
             return -1;
+        }
 
         int count = delegate.read(b, off, len);
-        if (count == -1)
+        if (count == -1) {
             eof = true;
-        else {
+        } else {
             position += count;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++) {
                 sum += b[i + off];
+            }
         }
         return count;
     }
@@ -74,31 +75,26 @@ class ChecksumInputStream extends InputStream implements ChecksumInput {
         return position;
     }
 
-    @Override
-    public int available() throws IOException {
+    @Override public int available() throws IOException {
         return delegate.available();
     }
 
-    @Override
-    public boolean isEof() {
+    @Override public boolean isEof() {
         return eof;
     }
 
-    @Override
-    public boolean markSupported() {
+    @Override public boolean markSupported() {
         return delegate.markSupported();
     }
 
-    @Override
-    public synchronized void mark(int readlimit) {
+    @Override public synchronized void mark(int readlimit) {
         delegate.mark(readlimit);
         markPosition = position;
         markSum = sum;
         sum = 0;
     }
 
-    @Override
-    public synchronized void reset() throws IOException {
+    @Override public synchronized void reset() throws IOException {
         delegate.reset();
         if (markPosition != -1) {
             position = markPosition;
@@ -107,16 +103,15 @@ class ChecksumInputStream extends InputStream implements ChecksumInput {
         }
     }
 
-    @Override
-    public long skip(long n) throws IOException {
+    @Override public long skip(long n) throws IOException {
         long l = delegate.skip(n);
         position += l;
         return l;
     }
 
-    @Override
-    public void close() throws IOException {
-        if (delegate != null)
+    @Override public void close() throws IOException {
+        if (delegate != null) {
             delegate.close();
+        }
     }
 }
