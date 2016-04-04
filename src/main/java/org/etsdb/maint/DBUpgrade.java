@@ -44,7 +44,9 @@ public class DBUpgrade {
 
             if (upgrade == null) {
                 if (currentVersion != DatabaseImpl.VERSION) {
-                    throw new EtsdbException("The code version " + DatabaseImpl.VERSION + " does not match the database version " + currentVersion);
+                    String errorMessage = String
+                            .format("The code version %d does not match the database version %d", DatabaseImpl.VERSION, currentVersion);
+                    throw new EtsdbException(errorMessage);
                 }
                 break;
             }
