@@ -25,8 +25,7 @@ public class ValueSerializer extends Serializer<ByteData> {
     public static final byte FLOAT = 4;
     public static final byte DOUBLE = 5;
 
-    @Override
-    public void toByteArray(ByteArrayBuilder b, ByteData data, long ts) {
+    @Override public void toByteArray(ByteArrayBuilder b, ByteData data, long ts) {
         if (data == null) {
             return;
         }
@@ -76,8 +75,7 @@ public class ValueSerializer extends Serializer<ByteData> {
         }
     }
 
-    @Override
-    public ByteData fromByteArray(ByteArrayBuilder b, long ts) {
+    @Override public ByteData fromByteArray(ByteArrayBuilder b, long ts) {
         if (b.getAvailable() <= 0) {
             return null;
         }

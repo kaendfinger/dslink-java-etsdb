@@ -198,7 +198,7 @@ public class Utils {
         String message = null;
         while (true) {
             try {
-                _delete(file);
+                deleteRecursive(file);
                 break;
             } catch (IOException e) {
                 if (e.getMessage() != null) {
@@ -214,7 +214,7 @@ public class Utils {
         }
     }
 
-    private static void _delete(File file) throws IOException {
+    private static void deleteRecursive(File file) throws IOException {
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {

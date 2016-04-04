@@ -19,7 +19,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- *
  * @param <T> the class of data that is written to this database.
  * @author Matthew Lohbihler
  */
@@ -56,8 +55,8 @@ public class DatabaseImpl<T> implements Database<T> {
     private boolean closed;
 
     public DatabaseImpl(File baseDir, Serializer<T> serializer, DbConfig config) {
-        if (config == null) // Use the defaults.
-        {
+        // Use the defaults
+        if (config == null) {
             config = new DbConfig();
         }
         config.validate();
@@ -144,8 +143,7 @@ public class DatabaseImpl<T> implements Database<T> {
 
         if (config.isAddShutdownHook()) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
+                @Override public void run() {
                     try {
                         close();
                     } catch (IOException e) {
@@ -160,8 +158,7 @@ public class DatabaseImpl<T> implements Database<T> {
         janitor.initiate();
     }
 
-    @Override
-    public File getBaseDir() {
+    @Override public File getBaseDir() {
         return baseDir;
     }
 
@@ -185,14 +182,12 @@ public class DatabaseImpl<T> implements Database<T> {
         lockConcurrent();
         try {
             File newDir = Utils.getSeriesDir(baseDir, toId);
-
-            if (!oldDir.exists()) // Old series name doesn't exist. Nothing to do.
-            {
+            // Old series name doesn't exist. Nothing to do.
+            if (!oldDir.exists()) {
                 return;
             }
-
-            if (newDir.equals(oldDir)) // Same file. Nothing to do.
-            {
+            // Same file. Nothing to do.
+            if (newDir.equals(oldDir)) {
                 return;
             }
 
@@ -223,8 +218,7 @@ public class DatabaseImpl<T> implements Database<T> {
         return maxOpenFiles > 0 && openFiles.get() >= maxOpenFiles;
     }
 
-    @Override
-    public void write(String seriesId, long ts, T value) {
+    @Override public void write(String seriesId, long ts, T value) {
         lockConcurrent();
         try {
             writesPerSecond.hit();
@@ -242,18 +236,15 @@ public class DatabaseImpl<T> implements Database<T> {
         }
     }
 
-    @Override
-    public void query(String seriesId, long fromTs, long toTs, final QueryCallback<T> cb) {
+    @Override public void query(String seriesId, long fromTs, long toTs, final QueryCallback<T> cb) {
         query(seriesId, fromTs, toTs, Integer.MAX_VALUE, false, cb);
     }
 
-    @Override
-    public void query(String seriesId, long fromTs, long toTs, int limit, final QueryCallback<T> cb) {
+    @Override public void query(String seriesId, long fromTs, long toTs, int limit, final QueryCallback<T> cb) {
         query(seriesId, fromTs, toTs, limit, false, cb);
     }
 
-    @Override
-    public void query(String seriesId, long fromTs, long toTs, int limit, boolean reverse, final QueryCallback<T> cb) {
+    @Override public void query(String seriesId, long fromTs, long toTs, int limit, boolean reverse, final QueryCallback<T> cb) {
         lockConcurrent();
         try {
             Series<T> series = getSeries(seriesId);
@@ -265,15 +256,13 @@ public class DatabaseImpl<T> implements Database<T> {
         }
     }
 
-    @Override
-    public long count(String seriesId, long fromTs, long toTs) {
+    @Override public long count(String seriesId, long fromTs, long toTs) {
         lockConcurrent();
         try {
             final AtomicLong count = new AtomicLong();
             Series<T> series = getSeries(seriesId);
             series.query(fromTs, toTs, Integer.MAX_VALUE, false, new RawQueryCallback() {
-                @Override
-                public void sample(String seriesId, long ts, ByteArrayBuilder b) {
+                @Override public void sample(String seriesId, long ts, ByteArrayBuilder b) {
                     count.incrementAndGet();
                 }
             });
@@ -285,8 +274,7 @@ public class DatabaseImpl<T> implements Database<T> {
         }
     }
 
-    @Override
-    public List<String> getSeriesIds() {
+    @Override public List<String> getSeriesIds() {
         lockConcurrent();
         try {
             List<String> ids = new ArrayList<>();
@@ -326,18 +314,15 @@ public class DatabaseImpl<T> implements Database<T> {
         return filesList;
     }
 
-    @Override
-    public long getDatabaseSize() {
+    @Override public long getDatabaseSize() {
         return DirectoryUtils.getSize(baseDir).getSize();
     }
 
-    @Override
-    public long availableSpace() {
+    @Override public long availableSpace() {
         return baseDir.getUsableSpace();
     }
 
-    @Override
-    public TimeRange getTimeRange(List<String> seriesIds) {
+    @Override public TimeRange getTimeRange(List<String> seriesIds) {
         lockConcurrent();
         try {
             TimeRange range = null;
@@ -358,8 +343,7 @@ public class DatabaseImpl<T> implements Database<T> {
         }
     }
 
-    @Override
-    public long delete(String seriesId, long fromTs, long toTs) {
+    @Override public long delete(String seriesId, long fromTs, long toTs) {
         lockConcurrent();
         try {
             Series<T> series = getSeries(seriesId);
@@ -371,8 +355,7 @@ public class DatabaseImpl<T> implements Database<T> {
         }
     }
 
-    @Override
-    public void purge(String seriesId, long toTs) {
+    @Override public void purge(String seriesId, long toTs) {
         lockConcurrent();
         try {
             Series<T> series = getSeries(seriesId);
@@ -387,8 +370,7 @@ public class DatabaseImpl<T> implements Database<T> {
     /**
      * @param seriesId ID to remove
      */
-    @Override
-    public void deleteSeries(String seriesId) {
+    @Override public void deleteSeries(String seriesId) {
         lockExclusive();
         try {
             synchronized (seriesLookup) {
@@ -406,9 +388,7 @@ public class DatabaseImpl<T> implements Database<T> {
         }
     }
 
-    @Override
-    @SuppressFBWarnings("DM_GC")
-    public void close() throws IOException {
+    @Override @SuppressFBWarnings("DM_GC") public void close() throws IOException {
         lockExclusive();
         try {
             if (!closed) {
@@ -547,13 +527,11 @@ public class DatabaseImpl<T> implements Database<T> {
     //
     // Monitors
     //
-    @Override
-    public int getWritesPerSecond() {
+    @Override public int getWritesPerSecond() {
         return writesPerSecond.getEventCounts()[0] / 5;
     }
 
-    @Override
-    public long getWriteCount() {
+    @Override public long getWriteCount() {
         return writeCount.get();
     }
 
@@ -561,13 +539,11 @@ public class DatabaseImpl<T> implements Database<T> {
         writeCount.set(count);
     }
 
-    @Override
-    public void setWriteCountHandler(Handler<Long> handler) {
+    @Override public void setWriteCountHandler(Handler<Long> handler) {
         writeCount.setHandler(handler);
     }
 
-    @Override
-    public long getFlushCount() {
+    @Override public long getFlushCount() {
         return flushCount.get();
     }
 
@@ -575,13 +551,11 @@ public class DatabaseImpl<T> implements Database<T> {
         flushCount.set(val);
     }
 
-    @Override
-    public void setFlushCountHandler(Handler<Long> handler) {
+    @Override public void setFlushCountHandler(Handler<Long> handler) {
         flushCount.setHandler(handler);
     }
 
-    @Override
-    public long getBackdateCount() {
+    @Override public long getBackdateCount() {
         return backdateCount.get();
     }
 
@@ -589,23 +563,19 @@ public class DatabaseImpl<T> implements Database<T> {
         backdateCount.set(val);
     }
 
-    @Override
-    public void setBackdateCountHandler(Handler<Long> handler) {
+    @Override public void setBackdateCountHandler(Handler<Long> handler) {
         backdateCount.setHandler(handler);
     }
 
-    @Override
-    public int getOpenFiles() {
+    @Override public int getOpenFiles() {
         return openFiles.get();
     }
 
-    @Override
-    public void setOpenFilesHandler(Handler<Integer> handler) {
+    @Override public void setOpenFilesHandler(Handler<Integer> handler) {
         openFiles.setHandler(handler);
     }
 
-    @Override
-    public long getFlushForced() {
+    @Override public long getFlushForced() {
         return flushForced.get();
     }
 
@@ -613,13 +583,11 @@ public class DatabaseImpl<T> implements Database<T> {
         flushForced.set(val);
     }
 
-    @Override
-    public void setFlushForcedHandler(Handler<Long> handler) {
+    @Override public void setFlushForcedHandler(Handler<Long> handler) {
         flushForced.setHandler(handler);
     }
 
-    @Override
-    public long getFlushExpired() {
+    @Override public long getFlushExpired() {
         return flushExpired.get();
     }
 
@@ -627,13 +595,11 @@ public class DatabaseImpl<T> implements Database<T> {
         flushExpired.set(val);
     }
 
-    @Override
-    public void setFlushExpiredHandler(Handler<Long> handler) {
+    @Override public void setFlushExpiredHandler(Handler<Long> handler) {
         flushExpired.setHandler(handler);
     }
 
-    @Override
-    public long getFlushLimit() {
+    @Override public long getFlushLimit() {
         return flushLimit.get();
     }
 
@@ -641,48 +607,40 @@ public class DatabaseImpl<T> implements Database<T> {
         flushLimit.set(val);
     }
 
-    @Override
-    public void setFlushLimitHandler(Handler<Long> handler) {
+    @Override public void setFlushLimitHandler(Handler<Long> handler) {
         flushLimit.setHandler(handler);
     }
 
-    @Override
-    public long getForcedClose() {
+    @Override public long getForcedClose() {
         return forcedClose.get();
     }
 
-    @Override
-    public int getLastFlushMillis() {
+    @Override public int getLastFlushMillis() {
         return janitor.lastFlushMillis;
     }
 
-    @Override
-    public void setLastFlushMillisHandler(Handler<Integer> handler) {
+    @Override public void setLastFlushMillisHandler(Handler<Integer> handler) {
         janitor.setFlushTimeHandler(handler);
     }
 
-    @Override
-    public int getQueueSize() {
+    @Override public int getQueueSize() {
         if (queueInfo == null) {
             return 0;
         }
         return queueInfo.queueSize.get();
     }
 
-    @Override
-    public void setQueueSizeHandler(Handler<Integer> handler) {
+    @Override public void setQueueSizeHandler(Handler<Integer> handler) {
         if (queueInfo != null) {
             queueInfo.queueSize.setHandler(handler);
         }
     }
 
-    @Override
-    public int getOpenShards() {
+    @Override public int getOpenShards() {
         return openShards.get();
     }
 
-    @Override
-    public void setOpenShardsHandler(Handler<Integer> handler) {
+    @Override public void setOpenShardsHandler(Handler<Integer> handler) {
         openShards.setHandler(handler);
     }
 
@@ -701,8 +659,7 @@ public class DatabaseImpl<T> implements Database<T> {
             this.cb = cb;
         }
 
-        @Override
-        public void sample(String seriesId, long ts, ByteArrayBuilder b) {
+        @Override public void sample(String seriesId, long ts, ByteArrayBuilder b) {
             T t = serializer.fromByteArray(b, ts);
             if (t != null) {
                 cb.sample(seriesId, ts, t);

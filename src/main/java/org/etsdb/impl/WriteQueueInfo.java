@@ -7,18 +7,18 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class WriteQueueInfo {
-    final int discardQueueSize;
-    final int expireMinimum;
-    final int expireMaximum;
-    final int shardQueueSizeMinimum;
-    final int shardQueueSizeMaximum;
     final int maxQueueSize;
-
+    final int discardQueueSize;
     final NotifyAtomicInteger queueSize = new NotifyAtomicInteger();
     final AtomicInteger recentDiscards = new AtomicInteger();
     final Random random = new Random();
 
-    public WriteQueueInfo(DbConfig config) {
+    private final int expireMinimum;
+    private final int expireMaximum;
+    private final int shardQueueSizeMinimum;
+    private final int shardQueueSizeMaximum;
+
+    WriteQueueInfo(DbConfig config) {
         expireMinimum = config.getQueueExpireMinimum();
         expireMaximum = config.getQueueExpireMaximum();
         shardQueueSizeMinimum = config.getQueueShardQueueSizeMinimum();
