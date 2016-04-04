@@ -96,8 +96,9 @@ class Janitor implements Runnable {
             }
         }
 
-        if (!running)
+        if (!running) {
             return;
+        }
 
         long now = System.currentTimeMillis();
         if (now >= nextFileLockCheck) {

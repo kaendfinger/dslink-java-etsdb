@@ -14,8 +14,8 @@ import java.util.UUID;
  *
  * @author Matthew
  */
-public class FileLock {
-    private static final Logger logger = LoggerFactory.getLogger(FileLock.class.getName());
+class FileLock {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileLock.class.getName());
 
     private static final int SLEEP_GAP = 25;
     private static final int TIME_GRANULARITY = 2000;
@@ -35,7 +35,7 @@ public class FileLock {
      * @param db    Database implementation to use
      * @param sleep the number of milliseconds to sleep
      */
-    public FileLock(DatabaseImpl<?> db, int sleep) {
+    FileLock(DatabaseImpl<?> db, int sleep) {
         this.file = new File(db.getBaseDir(), ".lock.db");
         this.sleep = sleep;
     }
@@ -53,9 +53,10 @@ public class FileLock {
      *
      * @throws RuntimeException if locking was not successful
      */
-    public synchronized void lock() {
-        if (locked)
+    synchronized void lock() {
+        if (locked) {
             throw new RuntimeException("already locked");
+        }
         try {
             lockFile();
         } catch (IOException e) {
@@ -68,21 +69,22 @@ public class FileLock {
      * Unlock the file. The watchdog thread is stopped. This method does nothing
      * if the file is already unlocked.
      */
-    public synchronized void unlock() {
-        if (!locked)
+    synchronized void unlock() {
+        if (!locked) {
             return;
+        }
 
         locked = false;
         try {
             if (file != null) {
                 if (load().equals(uniqueId)) {
                     if (!file.delete()) {
-                        logger.error("Failed to delete file: {}", file.getPath());
+                        LOGGER.error("Failed to delete file: {}", file.getPath());
                     }
                 }
             }
         } catch (Exception e) {
-            logger.warn("FileLock.unlock", e);
+            LOGGER.warn("FileLock.unlock", e);
         } finally {
             file = null;
         }
@@ -91,7 +93,7 @@ public class FileLock {
     /**
      * Save the lock file.
      */
-    public synchronized void save() {
+    private synchronized void save() {
         try {
             FileOutputStream out = null;
             try {
@@ -112,7 +114,7 @@ public class FileLock {
      *
      * @return the properties
      */
-    public String load() {
+    private String load() {
         FileInputStream in = null;
         try {
             synchronized (this) {
@@ -162,14 +164,16 @@ public class FileLock {
             waitUntilOld();
             save();
             sleep(2 * sleep);
-            if (!load().equals(uniqueId))
+            if (!load().equals(uniqueId)) {
                 throw new RuntimeException("Locked by another process");
+            }
 
             if (!file.delete()) {
-                logger.error("Failed to delete file: {}", file.getPath());
+                LOGGER.error("Failed to delete file: {}", file.getPath());
             }
-            if (!file.createNewFile())
+            if (!file.createNewFile()) {
                 throw new RuntimeException("Another process was faster");
+            }
         }
         save();
         sleep(SLEEP_GAP);
@@ -179,16 +183,15 @@ public class FileLock {
         }
     }
 
-    public synchronized void update() {
+    synchronized void update() {
         if (file != null) {
-            // trace.debug("watchdog check");
             try {
-                if (!file.exists() || file.lastModified() != lastWrite)
+                if (!file.exists() || file.lastModified() != lastWrite) {
                     save();
-            } catch (OutOfMemoryError e) {
-                // ignore
+                }
+            } catch (OutOfMemoryError ignored) {
             } catch (Exception e) {
-                logger.warn("FileLock.run", e);
+                LOGGER.warn("FileLock.run", e);
             }
         }
     }

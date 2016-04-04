@@ -12,11 +12,11 @@ public class Utils {
     static final byte[] SAMPLE_HEADER = {(byte) 0xfe, (byte) 0xed};
 
     public static final int MAX_DATA_LENGTH = 8192; // 8K
-    private static final Logger logger = LoggerFactory.getLogger(Utils.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class.getName());
     private static int SHARD_BITS = 30;
     // File IO retries
     private static final int FILE_IO_RETRIES = 30;
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
     private static final Date date = new Date(0);
 
     public static void setShardBits(int bits) {
@@ -93,14 +93,14 @@ public class Utils {
             if (c != null)
                 c.close();
         } catch (IOException e) {
-            logger.warn("Exception during close", e);
+            LOGGER.warn("Exception during close", e);
         }
     }
 
     public static String prettyTimestamp(long ts) {
-        synchronized (sdf) {
+        synchronized (DATE_FORMAT) {
             date.setTime(ts);
-            return sdf.format(date);
+            return DATE_FORMAT.format(date);
         }
     }
 
@@ -170,8 +170,8 @@ public class Utils {
                 throw new IOException("Failed to delete " + file);
 
             retries--;
-            if (logger.isDebugEnabled())
-                logger.debug("Failed to delete " + file + ", " + retries + " retries left");
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Failed to delete " + file + ", " + retries + " retries left");
             sleep(FILE_IO_RETRIES - retries);
         }
     }
@@ -185,8 +185,8 @@ public class Utils {
                 throw new IOException("Failed to rename " + from + " to " + to);
 
             retries--;
-            if (logger.isDebugEnabled())
-                logger.debug("Failed to rename " + from + " to " + to + ", " + retries + " retries left");
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Failed to rename " + from + " to " + to + ", " + retries + " retries left");
             sleep(FILE_IO_RETRIES - retries);
         }
     }
@@ -245,7 +245,7 @@ public class Utils {
 
             if (files == null || files.length == 0) {
                 if (!file.delete()) {
-                    logger.error("Failed to delete empty dir: {}", file.getPath());
+                    LOGGER.error("Failed to delete empty dir: {}", file.getPath());
                 }
             }
         }
