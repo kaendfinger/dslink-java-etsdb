@@ -19,11 +19,14 @@ public class Utils {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
     private static final Date date = new Date(0);
 
+    private Utils() {
+    }
+
     public static void setShardBits(int bits) {
         SHARD_BITS = bits;
     }
 
-    public static File getSeriesDir(File baseDir, String seriesId) {
+    static File getSeriesDir(File baseDir, String seriesId) {
         return new File(baseDir, getShardDirectory(seriesId) + File.separator + seriesId);
     }
 
@@ -33,7 +36,7 @@ public class Utils {
      * @param seriesId ID
      * @return the top level directory in which the series data is stored.
      */
-    public static long getShardDirectory(String seriesId) {
+    private static long getShardDirectory(String seriesId) {
         int i = seriesId.hashCode();
         if (i < 0)
             i = -i;
@@ -46,15 +49,15 @@ public class Utils {
      * @param ts the time stamp of the sample
      * @return the name of the shard file.
      */
-    public static long getShardId(long ts) {
+    static long getShardId(long ts) {
         return ts >> SHARD_BITS;
     }
 
-    public static long getShardId(String filename) {
+    static long getShardId(String filename) {
         return getShardId(filename, 5);
     }
 
-    public static long getShardId(String filename, int suffixLength) {
+    static long getShardId(String filename, int suffixLength) {
         return Long.parseLong(filename.substring(0, filename.length() - suffixLength));
     }
 
@@ -62,15 +65,17 @@ public class Utils {
      * Returns the offset of the given ts within the given shard.
      *
      * @param shardId ID of the shard
-     * @param ts Timestamp
+     * @param ts      Timestamp
      * @return offset
      */
-    public static long getOffsetInShard(long shardId, long ts) {
+    static long getOffsetInShard(long shardId, long ts) {
         long tsShardId = getShardId(ts);
-        if (tsShardId < shardId)
+        if (tsShardId < shardId) {
             return 0;
-        if (tsShardId == shardId)
+        }
+        if (tsShardId == shardId) {
             return getSampleOffset(ts);
+        }
         return 0x40000000;
     }
 
@@ -80,15 +85,15 @@ public class Utils {
      * @param ts the time stamp of the sample
      * @return the offset of the sample within the shard file.
      */
-    public static long getSampleOffset(long ts) {
+    static long getSampleOffset(long ts) {
         return ts & 0x3fffffff;
     }
 
-    public static long getTimestamp(long shardFile, long offset) {
+    static long getTimestamp(long shardFile, long offset) {
         return (shardFile << SHARD_BITS) | offset;
     }
 
-    public static void closeQuietly(Closeable c) {
+    static void closeQuietly(Closeable c) {
         try {
             if (c != null)
                 c.close();
@@ -104,12 +109,12 @@ public class Utils {
         }
     }
 
-    public static void writeCompactInt(OutputStream out, int i) throws IOException {
+    static void writeCompactInt(OutputStream out, int i) throws IOException {
         // Convert to unsigned.
         putCompactLong(out, i & 0xffffffffL);
     }
 
-    public static void putCompactLong(OutputStream out, long l) throws IOException {
+    private static void putCompactLong(OutputStream out, long l) throws IOException {
         if (l < 0)
             throw new IllegalArgumentException("Cannot store negative numbers");
         while (true) {
@@ -122,25 +127,27 @@ public class Utils {
         }
     }
 
-    public static int readCompactInt(Input in) throws IOException {
+    static int readCompactInt(Input in) throws IOException {
         return (int) readCompactLong(in);
     }
 
-    public static long readCompactLong(Input in) throws IOException {
+    private static long readCompactLong(Input in) throws IOException {
         long result = 0;
         int count = 0;
         while (true) {
             long l = in.read();
-            if (l == -1)
+            if (l == -1) {
                 throw new IOException("EOF");
+            }
             result |= (l & 0x7f) << (count++ * 7);
-            if (l < 128)
+            if (l < 128) {
                 break;
+            }
         }
         return result;
     }
 
-    public static boolean skip(InputStream in, long n) throws IOException {
+    static boolean skip(InputStream in, long n) throws IOException {
         while (n > 0) {
             long skipped = in.skip(n);
             if (skipped == 0) {
@@ -148,8 +155,9 @@ public class Utils {
                 in.mark(1);
                 int i = in.read();
                 in.reset();
-                if (i == -1)
+                if (i == -1) {
                     return true;
+                }
             }
             n -= skipped;
         }
@@ -157,43 +165,51 @@ public class Utils {
         return false;
     }
 
-    public static void deleteWithRetry(File file) throws IOException {
-        if (!file.exists())
+    static void deleteWithRetry(File file) throws IOException {
+        if (!file.exists()) {
             return;
+        }
 
         int retries = FILE_IO_RETRIES;
         while (true) {
-            if (file.delete())
+            if (file.delete()) {
                 break;
+            }
 
-            if (retries == 0)
+            if (retries == 0) {
                 throw new IOException("Failed to delete " + file);
+            }
 
             retries--;
-            if (LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Failed to delete " + file + ", " + retries + " retries left");
+            }
             sleep(FILE_IO_RETRIES - retries);
         }
     }
 
-    public static void renameWithRetry(File from, File to) throws IOException {
+    static void renameWithRetry(File from, File to) throws IOException {
         int retries = FILE_IO_RETRIES;
         while (true) {
-            if (from.renameTo(to))
+            if (from.renameTo(to)) {
                 break;
-            if (retries == 0)
+            }
+            if (retries == 0) {
                 throw new IOException("Failed to rename " + from + " to " + to);
+            }
 
             retries--;
-            if (LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Failed to rename " + from + " to " + to + ", " + retries + " retries left");
+            }
             sleep(FILE_IO_RETRIES - retries);
         }
     }
 
     public static void delete(File file) throws IOException {
-        if (!file.exists())
+        if (!file.exists()) {
             return;
+        }
 
         String message = null;
         while (true) {
@@ -202,14 +218,16 @@ public class Utils {
                 break;
             } catch (IOException e) {
                 if (e.getMessage() != null) {
-                    if (message == null)
+                    if (message == null) {
                         message = e.getMessage();
-                    else {
-                        if (e.getMessage().equals(message))
+                    } else {
+                        if (e.getMessage().equals(message)) {
                             throw e;
+                        }
                     }
-                } else
+                } else {
                     throw e;
+                }
             }
         }
     }
@@ -224,23 +242,26 @@ public class Utils {
             }
         }
 
-        if (!file.delete())
+        if (!file.delete()) {
             throw new IOException("Failed to delete " + file);
+        }
     }
 
-    public static void deleteEmptyDirs(File file) {
+    static void deleteEmptyDirs(File file) {
         if (file.isDirectory()) {
             // Recurse to leaves.
             File[] files = file.listFiles();
             if (files != null && files.length > 0) {
                 boolean hasFiles = false;
                 for (File subFile : files) {
-                    if (!subFile.isDirectory())
+                    if (!subFile.isDirectory()) {
                         hasFiles = true;
+                    }
                     deleteEmptyDirs(subFile);
                 }
-                if (!hasFiles)
+                if (!hasFiles) {
                     files = file.listFiles();
+                }
             }
 
             if (files == null || files.length == 0) {
@@ -251,14 +272,14 @@ public class Utils {
         }
     }
 
-    public static void write4ByteUnsigned(OutputStream out, long l) throws IOException {
+    static void write4ByteUnsigned(OutputStream out, long l) throws IOException {
         out.write((byte) (l >> 24));
         out.write((byte) (l >> 16));
         out.write((byte) (l >> 8));
         out.write((byte) l);
     }
 
-    public static long read4ByteUnsigned(Input in) throws IOException {
+    static long read4ByteUnsigned(Input in) throws IOException {
         long l = 0;
         l |= (in.read() & 0xff) << 24;
         l |= (in.read() & 0xff) << 16;
@@ -267,24 +288,27 @@ public class Utils {
         return l;
     }
 
-    public static void sleep(int time) {
+    private static void sleep(int time) {
         try {
-            if (time > 0)
+            if (time > 0) {
                 Thread.sleep(time);
+            }
         } catch (InterruptedException e) {
             // Ignore
         }
     }
 
-    public static int compareLong(long l1, long l2) {
-        if (l1 < l2)
+    static int compareLong(long l1, long l2) {
+        if (l1 < l2) {
             return -1;
-        if (l1 == l2)
+        }
+        if (l1 == l2) {
             return 0;
+        }
         return 1;
     }
 
-    public static byte[] copy(byte[] data, int off, int len) {
+    static byte[] copy(byte[] data, int off, int len) {
         byte[] b = new byte[len];
         System.arraycopy(data, off, b, 0, len);
         return b;
