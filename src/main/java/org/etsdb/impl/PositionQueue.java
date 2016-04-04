@@ -9,11 +9,11 @@ import org.etsdb.util.queue.LongQueue;
  *
  * @author Matthew
  */
-public class PositionQueue {
+class PositionQueue {
     private final LongQueue queue;
     private final LongLimitQueue limitQueue;
 
-    public PositionQueue(int limit) {
+    PositionQueue(int limit) {
         if (limit == Integer.MAX_VALUE) {
             queue = new LongQueue();
             limitQueue = null;
@@ -23,22 +23,25 @@ public class PositionQueue {
         }
     }
 
-    public void push(long l) {
-        if (queue != null)
+    void push(long l) {
+        if (queue != null) {
             queue.push(l);
-        else
+        } else {
             limitQueue.push(l);
+        }
     }
 
     public int size() {
-        if (queue != null)
+        if (queue != null) {
             return queue.size();
+        }
         return limitQueue.size();
     }
 
-    public long peek(int index) {
-        if (queue != null)
+    long peek(int index) {
+        if (queue != null) {
             return queue.peek(index);
+        }
         return limitQueue.peek(index);
     }
 }

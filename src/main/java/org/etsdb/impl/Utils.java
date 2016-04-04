@@ -13,7 +13,7 @@ public class Utils {
 
     public static final int MAX_DATA_LENGTH = 8192; // 8K
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class.getName());
-    private static int SHARD_BITS = 30;
+    private static int shardBits = 30;
     // File IO retries
     private static final int FILE_IO_RETRIES = 30;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
@@ -23,7 +23,7 @@ public class Utils {
     }
 
     public static void setShardBits(int bits) {
-        SHARD_BITS = bits;
+        shardBits = bits;
     }
 
     static File getSeriesDir(File baseDir, String seriesId) {
@@ -50,7 +50,7 @@ public class Utils {
      * @return the name of the shard file.
      */
     static long getShardId(long ts) {
-        return ts >> SHARD_BITS;
+        return ts >> shardBits;
     }
 
     static long getShardId(String filename) {
@@ -90,7 +90,7 @@ public class Utils {
     }
 
     static long getTimestamp(long shardFile, long offset) {
-        return (shardFile << SHARD_BITS) | offset;
+        return (shardFile << shardBits) | offset;
     }
 
     static void closeQuietly(Closeable c) {

@@ -123,8 +123,9 @@ class FileLock {
             byte[] b = new byte[128];
             int position = 0;
             int count;
-            while ((count = in.read(b, position, b.length - position)) != -1)
+            while ((count = in.read(b, position, b.length - position)) != -1) {
                 position += count;
+            }
             return new String(b, 0, position, "UTF-16");
         } catch (IOException e) {
             throw new RuntimeException("Could not load lock file", e);

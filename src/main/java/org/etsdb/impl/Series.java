@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 class Series<T> {
-    private static final Logger logger = LoggerFactory.getLogger(Series.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Series.class.getName());
 
     private final DatabaseImpl<T> db;
     private final File seriesDir;
@@ -31,7 +31,7 @@ class Series<T> {
         this.db = db;
         seriesDir = Utils.getSeriesDir(baseDir, id);
         if (!(seriesDir.exists() || seriesDir.mkdirs())) {
-            logger.error("Failed to create seriesDir: {}", seriesDir.getPath());
+            LOGGER.error("Failed to create seriesDir: {}", seriesDir.getPath());
         }
         this.id = id;
         this.serializer = serializer;
@@ -90,10 +90,12 @@ class Series<T> {
         long fromShard = Utils.getShardId(fromTs);
         long toShard = Utils.getShardId(toTs);
         synchronized (shardLookup) {
-            if (fromShard < minShard)
+            if (fromShard < minShard) {
                 fromShard = minShard;
-            if (toShard > maxShard)
+            }
+            if (toShard > maxShard) {
                 toShard = maxShard;
+            }
         }
 
         // Iterate through the shards.
@@ -213,13 +215,13 @@ class Series<T> {
                         try {
                             Utils.deleteWithRetry(new File(seriesDir, shardId + ".meta"));
                         } catch (IOException e) {
-                            logger.warn("Error while deleting shard meta " + shardId + " in series " + id, e);
+                            LOGGER.warn("Error while deleting shard meta " + shardId + " in series " + id, e);
                         }
 
                         try {
                             Utils.deleteWithRetry(new File(seriesDir, shardId + ".data"));
                         } catch (IOException e) {
-                            logger.warn("Error while deleting shard data " + shardId + " in series " + id, e);
+                            LOGGER.warn("Error while deleting shard data " + shardId + " in series " + id, e);
                         }
                     } finally {
                         shard.unlockWrite();

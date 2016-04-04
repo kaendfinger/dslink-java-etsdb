@@ -141,15 +141,16 @@ class Janitor implements Runnable {
             }
 
             // If the time that it took to do the last flush, times 10, is greater than the flush interval, use
-            // the time * 10 as the interval. This prevents the flush from running too often. But, don't let the 
+            // the time * 10 as the interval. This prevents the flush from running too often. But, don't let the
             // sleep time exceed the flush interval * 4.
             time *= 10;
 
             if (gc || time < flushInterval) {
                 time = flushInterval;
             } else {
-                if (time > flushInterval * 4)
+                if (time > flushInterval * 4) {
                     time = flushInterval * 4;
+                }
             }
             nextFlush = System.currentTimeMillis() + time;
         }
