@@ -31,11 +31,11 @@ class ScanInfo {
      */
     private boolean eof;
 
-    public ScanInfo() {
+    ScanInfo() {
         // no op
     }
 
-    public ScanInfo(List<PendingWrite> cache) {
+    ScanInfo(List<PendingWrite> cache) {
         this.cache = cache;
         cacheIndex = -1;
     }
@@ -57,8 +57,9 @@ class ScanInfo {
     }
 
     boolean isEndOfShard() {
-        if (eof && cache != null)
+        if (eof && cache != null) {
             return cacheIndex >= cache.size();
+        }
         return eof;
     }
 
@@ -84,7 +85,7 @@ class ScanInfo {
         reset(null);
     }
 
-    void reset(DataShard shard) {
+    private void reset(DataShard shard) {
         this.eof = false;
         cacheIndex = -1;
         if (shard != null)

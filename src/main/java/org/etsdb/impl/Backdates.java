@@ -12,8 +12,7 @@ import java.util.*;
  * @author Matthew
  */
 class Backdates {
-
-    static final Logger logger = LoggerFactory.getLogger(Backdates.class.getName());
+    static final Logger LOGGER = LoggerFactory.getLogger(Backdates.class.getName());
 
     final DatabaseImpl<?> db;
     final int startDelay;
@@ -36,20 +35,19 @@ class Backdates {
     }
 
     void close() {
-        BackdatePoster _poster;
+        BackdatePoster poster;
         synchronized (backdates) {
-            _poster = poster;
+            poster = this.poster;
         }
 
-        if (_poster != null) {
+        if (poster != null) {
             // Break the poster out of its start wait in case that's what it is doing.
-            _poster.notify();
-            _poster.join();
+            poster.notify();
+            poster.join();
         }
     }
 
-    class BackdatePoster implements Runnable {
-
+    private class BackdatePoster implements Runnable {
         private final Thread thread;
 
         BackdatePoster() {
@@ -58,12 +56,11 @@ class Backdates {
             thread.start();
         }
 
-        @Override
-        public void run() {
+        @Override public void run() {
             try {
                 runImpl();
             } catch (Exception e) {
-                logger.warn("Backdate poster failed with exception", e);
+                LOGGER.warn("Backdate poster failed with exception", e);
             }
         }
 

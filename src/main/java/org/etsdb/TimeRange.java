@@ -32,10 +32,12 @@ public class TimeRange {
     }
 
     public void add(long ts) {
-        if (from > ts)
+        if (from > ts) {
             from = ts;
-        if (to < ts)
+        }
+        if (to < ts) {
             to = ts;
+        }
     }
 
     public TimeRange union(TimeRange that) {
@@ -45,14 +47,10 @@ public class TimeRange {
         return result;
     }
 
-    @Override
-    public String toString() {
-        if (isUndefined())
+    @Override public String toString() {
+        if (isUndefined()) {
             return "TimeRange [undefined]";
-        return "TimeRange [from=" +
-                Utils.prettyTimestamp(from) +
-                ", to=" +
-                Utils.prettyTimestamp(to) +
-                "]";
+        }
+        return String.format("TimeRange [from=%s, to=%s]", Utils.prettyTimestamp(from), Utils.prettyTimestamp(to));
     }
 }

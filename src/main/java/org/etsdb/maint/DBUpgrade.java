@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DBUpgrade {
-    private static final Logger logger = LoggerFactory.getLogger(DBUpgrade.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DBUpgrade.class.getName());
 
     private final DatabaseImpl<?> db;
 
@@ -43,14 +43,16 @@ public class DBUpgrade {
             }
 
             if (upgrade == null) {
-                if (currentVersion != DatabaseImpl.VERSION)
-                    throw new EtsdbException("The code version " + DatabaseImpl.VERSION
-                            + " does not match the database version " + currentVersion);
+                if (currentVersion != DatabaseImpl.VERSION) {
+                    String errorMessage = String
+                            .format("The code version %d does not match the database version %d", DatabaseImpl.VERSION, currentVersion);
+                    throw new EtsdbException(errorMessage);
+                }
                 break;
             }
 
             try {
-                logger.info("Upgrading from " + currentVersion + " to " + upgrade.nextVersion());
+                LOGGER.info("Upgrading from " + currentVersion + " to " + upgrade.nextVersion());
 
                 upgrade.setDb(db);
                 upgrade.upgrade();

@@ -21,6 +21,7 @@ public class PendingWrite implements Comparable<PendingWrite> {
 
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
+    // CHECKSTYLE:OFF
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -30,6 +31,7 @@ public class PendingWrite implements Comparable<PendingWrite> {
         return Arrays.equals(data, that.data);
 
     }
+    // CHECKSTYLE:ON
 
     @Override
     public int hashCode() {

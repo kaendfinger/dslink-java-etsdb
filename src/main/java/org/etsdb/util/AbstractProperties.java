@@ -3,18 +3,19 @@ package org.etsdb.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public abstract class AbstractProperties {
     private static final Pattern PATTERN_ENV = Pattern.compile("(\\$\\{env:(.+?)\\})");
     private static final Pattern PATTERN_PROP = Pattern.compile("(\\$\\{prop:(.+?)\\})");
     private static final Pattern PATTERN_BS = Pattern.compile("\\\\");
     private static final Pattern PATTERN_DOL = Pattern.compile("\\$");
-    private final Logger LOG = LoggerFactory.getLogger(getClass());
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final String description;
 
-    public AbstractProperties() {
+    protected AbstractProperties() {
         this("unnamed");
     }
 
@@ -50,23 +51,27 @@ public abstract class AbstractProperties {
         if (s == null) {
             return "";
         }
-        s = PATTERN_BS.matcher(s).replaceAll("\\\\\\\\");
-        s = PATTERN_DOL.matcher(s).replaceAll("\\\\\\$");
+        String escaped;
+        escaped = PATTERN_BS.matcher(s).replaceAll("\\\\\\\\");
+        escaped = PATTERN_DOL.matcher(escaped).replaceAll("\\\\\\$");
 
-        return s;
+        return escaped;
     }
 
     protected abstract String getStringImpl(String paramString);
 
     public int getInt(String key, int defaultValue) {
         String value = getString(key);
+
         if ("".equals(value)) {
             return defaultValue;
         }
+
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            this.LOG.warn("(" + this.description + ") Can't parse int from properties key: " + key + ", value=" + value);
+            String loggingMessage = "(%s) Can't parse int from properties key: %s, value=%s";
+            logger.warn(String.format(loggingMessage, this.description, key, value));
         }
         return defaultValue;
     }
@@ -82,7 +87,8 @@ public abstract class AbstractProperties {
         if ("false".equalsIgnoreCase(value)) {
             return false;
         }
-        this.LOG.warn("(" + this.description + ") Can't parse boolean from properties key: " + key + ", value=" + value);
+        String loggingMessage = "(%s) Can't parse boolean from properties key: %s, value=%s";
+        logger.warn(String.format(loggingMessage, this.description, key, value));
         return defaultValue;
     }
 }

@@ -34,8 +34,7 @@ public class ByteArrayBuilder {
         buffer = new byte[initialSize];
     }
 
-    @SuppressFBWarnings("EI_EXPOSE_REP")
-    public ByteArrayBuilder(byte[] buffer) {
+    @SuppressFBWarnings("EI_EXPOSE_REP") public ByteArrayBuilder(byte[] buffer) {
         this.buffer = buffer;
         this.writeOffset = buffer.length;
     }
@@ -45,8 +44,7 @@ public class ByteArrayBuilder {
         readOffset = 0;
     }
 
-    @SuppressFBWarnings("EI_EXPOSE_REP")
-    public byte[] getBuffer() {
+    @SuppressFBWarnings("EI_EXPOSE_REP") public byte[] getBuffer() {
         return buffer;
     }
 
@@ -59,14 +57,11 @@ public class ByteArrayBuilder {
     }
 
     public void resetCapacity() {
-        if (buffer.length > DEFAULT_CAPACITY)
+        if (buffer.length > DEFAULT_CAPACITY) {
             buffer = new byte[DEFAULT_CAPACITY];
+        }
     }
 
-    //
-    // 
-    // Put
-    //
     public void put(byte b) {
         ensureCapacity(1);
         buffer[writeOffset++] = b;
@@ -76,7 +71,7 @@ public class ByteArrayBuilder {
         put(src, 0, src.length);
     }
 
-    public void put(byte[] src, int offset, int length) {
+    private void put(byte[] src, int offset, int length) {
         ensureCapacity(length);
         System.arraycopy(src, offset, buffer, writeOffset, length);
         writeOffset += length;
@@ -95,6 +90,7 @@ public class ByteArrayBuilder {
 
     public void putInt(int i) {
         ensureCapacity(4);
+
         buffer[writeOffset++] = (byte) (i >> 24);
         buffer[writeOffset++] = (byte) (i >> 16);
         buffer[writeOffset++] = (byte) (i >> 8);
@@ -128,29 +124,32 @@ public class ByteArrayBuilder {
      */
     public void putString(String s) {
         byte[] bytes = null;
-        if (s != null)
+        if (s != null) {
             bytes = s.getBytes(UTF8);
+        }
 
         // Ensure necessary capacity for the string.
         int ensureLength;
-        if (bytes == null)
+        if (bytes == null) {
             ensureLength = 1;
-        else {
-            if (bytes.length >= 0x20000000)
+        } else {
+            if (bytes.length >= 0x20000000) {
                 throw new IllegalArgumentException("Value too big for compact int");
-            if (bytes.length >= 0x200000)
+            } else if (bytes.length >= 0x200000) {
                 ensureLength = 4;
-            else if (bytes.length >= 0x2000)
+            } else if (bytes.length >= 0x2000) {
                 ensureLength = 3;
-            else if (bytes.length >= 0x20)
+            } else if (bytes.length >= 0x20) {
                 ensureLength = 2;
-            else
+            } else {
                 ensureLength = 1;
+            }
             ensureLength += bytes.length;
         }
+
         ensureCapacity(ensureLength);
 
-        // The first bit of the stored values determines if the string is null. The next two bits determine how many 
+        // The first bit of the stored values determines if the string is null. The next two bits determine how many
         // bytes are used to store the string length. The rest of the value without these bits is the length.
         // 100 = null.
         // 011 = 4 bytes
@@ -159,10 +158,9 @@ public class ByteArrayBuilder {
         // 000 = 1 byte
         //
         // This method is able to store string lengths up to 536870911 bytes.
-
-        if (bytes == null)
+        if (bytes == null) {
             buffer[writeOffset++] = (byte) 0x80;
-        else {
+        } else {
             if (bytes.length >= 0x200000) {
                 buffer[writeOffset++] = (byte) ((bytes.length >> 24) | 0x60);
                 buffer[writeOffset++] = (byte) (bytes.length >> 16);
@@ -182,6 +180,7 @@ public class ByteArrayBuilder {
             System.arraycopy(bytes, 0, buffer, writeOffset, bytes.length);
             writeOffset += bytes.length;
         }
+
     }
 
     public void put(Input in, int length) throws IOException {
@@ -189,21 +188,24 @@ public class ByteArrayBuilder {
         int done = 0;
         while (done < length) {
             int count;
+
             try {
                 count = in.read(buffer, writeOffset + done, length - done);
             } catch (IndexOutOfBoundsException e) {
-                throw new RuntimeException("buf: " + buffer.length + ", writeOffset=" + writeOffset + ", length="
-                        + length + ", done=" + done, e);
+                throw new RuntimeException(
+                        "buf: " + buffer.length + ", writeOffset=" + writeOffset + ", length=" + length + ", done=" + done, e);
             }
-            if (count == -1)
+
+            if (count == -1) {
                 break;
+            }
+
             done += count;
         }
         writeOffset += done;
     }
 
     //
-    // 
     // Get
     //
     public byte get() {
@@ -243,8 +245,8 @@ public class ByteArrayBuilder {
 
     public long getLong() {
         ensureAvailable(8);
-        return makeLong(buffer[readOffset++], buffer[readOffset++], buffer[readOffset++], buffer[readOffset++],
-                buffer[readOffset++], buffer[readOffset++], buffer[readOffset++], buffer[readOffset++]);
+        return makeLong(buffer[readOffset++], buffer[readOffset++], buffer[readOffset++], buffer[readOffset++], buffer[readOffset++],
+                buffer[readOffset++], buffer[readOffset++], buffer[readOffset++]);
     }
 
     public float getFloat() {
@@ -260,8 +262,9 @@ public class ByteArrayBuilder {
         byte b = get();
 
         // Null?
-        if ((b & 0x80) == 0x80)
+        if ((b & 0x80) == 0x80) {
             return null;
+        }
 
         int length = 0;
         if ((b & 0x60) == 0x60) {
@@ -279,8 +282,9 @@ public class ByteArrayBuilder {
             ensureAvailable(1);
             length |= (b & 0x1f) << 8;
             length |= buffer[readOffset++] & 0xff;
-        } else
+        } else {
             length = b & 0xff;
+        }
 
         ensureAvailable(length);
         String s = new String(buffer, readOffset, length, UTF8);
@@ -295,22 +299,25 @@ public class ByteArrayBuilder {
     }
 
     //
-    //
     // Private
     //
     private void ensureAvailable(int len) {
-        if (getAvailable() < len)
+        if (getAvailable() < len) {
             throw new BufferOverflowException();
+        }
     }
 
     private void ensureCapacity(int len) {
         int min = writeOffset + len;
+
         if (buffer.length < min) {
             int newLength = buffer.length << 1;
-            while (newLength < min)
+            while (newLength < min) {
                 newLength <<= 1;
-            if (newLength > Utils.MAX_DATA_LENGTH)
+            }
+            if (newLength > Utils.MAX_DATA_LENGTH) {
                 throw new RuntimeException("Data length can not exceed " + Utils.MAX_DATA_LENGTH);
+            }
             byte[] b = new byte[newLength];
             System.arraycopy(buffer, 0, b, 0, buffer.length);
             buffer = b;

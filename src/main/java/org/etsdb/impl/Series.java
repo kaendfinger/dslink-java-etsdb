@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 class Series<T> {
-    private static final Logger logger = LoggerFactory.getLogger(Series.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Series.class.getName());
 
     private final DatabaseImpl<T> db;
     private final File seriesDir;
@@ -31,14 +31,13 @@ class Series<T> {
         this.db = db;
         seriesDir = Utils.getSeriesDir(baseDir, id);
         if (!(seriesDir.exists() || seriesDir.mkdirs())) {
-            logger.error("Failed to create seriesDir: {}", seriesDir.getPath());
+            LOGGER.error("Failed to create seriesDir: {}", seriesDir.getPath());
         }
         this.id = id;
         this.serializer = serializer;
 
         String[] shards = seriesDir.list(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
+            @Override public boolean accept(File dir, String name) {
                 return name.endsWith(".data") || name.endsWith(".meta");
             }
         });
@@ -91,17 +90,20 @@ class Series<T> {
         long fromShard = Utils.getShardId(fromTs);
         long toShard = Utils.getShardId(toTs);
         synchronized (shardLookup) {
-            if (fromShard < minShard)
+            if (fromShard < minShard) {
                 fromShard = minShard;
-            if (toShard > maxShard)
+            }
+            if (toShard > maxShard) {
                 toShard = maxShard;
+            }
         }
 
         // Iterate through the shards.
         for (long sid = fromShard; sid <= toShard; sid++) {
             long shardId = sid;
-            if (reverse)
+            if (reverse) {
                 shardId = toShard - sid + fromShard;
+            }
 
             // Get a handle on the current shard.
             DataShard shard = getShardById(shardId, false);
@@ -110,16 +112,18 @@ class Series<T> {
                 long toOffset = Utils.getOffsetInShard(shardId, toTs);
 
                 int count;
-                if (reverse)
+                if (reverse) {
                     count = shard.queryReverse(fromOffset, toOffset, limit, cb);
-                else
+                } else {
                     count = shard.query(fromOffset, toOffset, limit, cb);
+                }
 
                 if (limit != Integer.MAX_VALUE) {
                     limit -= count;
-                    if (limit <= 0)
+                    if (limit <= 0) {
                         // We found all the rows we need. Break from the shard loop.
                         break;
+                    }
                 }
             } finally {
                 shard.unlockRead();
@@ -135,17 +139,18 @@ class Series<T> {
             maxShard = this.maxShard;
         }
 
-        if (maxShard == 0)
+        if (maxShard == 0) {
             return null;
+        }
 
         TimeRange range = new TimeRange();
 
         DataShard min = getShardById(minShard, false);
         try {
             range.setFrom(min.getMinTs());
-            if (minShard == maxShard)
+            if (minShard == maxShard) {
                 range.setTo(min.getMaxTs());
-            else {
+            } else {
                 DataShard max = getShardById(maxShard, false);
                 try {
                     range.setTo(max.getMaxTs());
@@ -166,10 +171,12 @@ class Series<T> {
         long deleteCount = 0;
 
         synchronized (shardLookup) {
-            if (fromShard < minShard)
+            if (fromShard < minShard) {
                 fromShard = minShard;
-            if (toShard > maxShard)
+            }
+            if (toShard > maxShard) {
                 toShard = maxShard;
+            }
 
             for (long shardId = fromShard; shardId <= toShard; ++shardId) {
                 DataShard shard = getShardById(shardId, true);
@@ -188,10 +195,12 @@ class Series<T> {
     void purge(long toTs) {
         long toShard = Utils.getShardId(toTs);
 
-        if (toShard <= minShard)
+        if (toShard <= minShard) {
             return;
-        if (toShard > maxShard)
+        }
+        if (toShard > maxShard) {
             toShard = maxShard + 1;
+        }
 
         synchronized (shardLookup) {
             for (long shardId = minShard; shardId < toShard; shardId++) {
@@ -206,13 +215,13 @@ class Series<T> {
                         try {
                             Utils.deleteWithRetry(new File(seriesDir, shardId + ".meta"));
                         } catch (IOException e) {
-                            logger.warn("Error while deleting shard meta " + shardId + " in series " + id, e);
+                            LOGGER.warn("Error while deleting shard meta " + shardId + " in series " + id, e);
                         }
 
                         try {
                             Utils.deleteWithRetry(new File(seriesDir, shardId + ".data"));
                         } catch (IOException e) {
-                            logger.warn("Error while deleting shard data " + shardId + " in series " + id, e);
+                            LOGGER.warn("Error while deleting shard data " + shardId + " in series " + id, e);
                         }
                     } finally {
                         shard.unlockWrite();
@@ -223,8 +232,9 @@ class Series<T> {
             if (toShard > maxShard) {
                 minShard = Long.MAX_VALUE;
                 maxShard = 0;
-            } else
+            } else {
                 minShard = toShard;
+            }
         }
     }
 
@@ -306,21 +316,24 @@ class Series<T> {
             DataShard shard = _getShardById(shardId);
 
             // Lock it appropriately
-            if (writeLock)
+            if (writeLock) {
                 shard.lockWrite();
-            else
+            } else {
                 shard.lockRead();
+            }
 
             // Check if it is already closed.
-            if (!shard.isClosed())
+            if (!shard.isClosed()) {
                 // If not, we're good, so just return it.
                 return shard;
+            }
 
             // Unlock the shard.
-            if (writeLock)
+            if (writeLock) {
                 shard.unlockWrite();
-            else
+            } else {
                 shard.unlockRead();
+            }
 
             // Try again to get a shard that is not already closed.
             attempts--;
@@ -347,9 +360,11 @@ class Series<T> {
     }
 
     private void updateMinMax(long shardId) {
-        if (minShard > shardId)
+        if (minShard > shardId) {
             minShard = shardId;
-        if (maxShard < shardId)
+        }
+        if (maxShard < shardId) {
             maxShard = shardId;
+        }
     }
 }

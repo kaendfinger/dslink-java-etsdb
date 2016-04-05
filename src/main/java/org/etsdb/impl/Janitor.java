@@ -6,9 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-
 class Janitor implements Runnable {
-    static final Logger logger = LoggerFactory.getLogger(Janitor.class.getName());
+    static final Logger LOGGER = LoggerFactory.getLogger(Janitor.class.getName());
 
     private Handler<Integer> handler;
     int lastFlushMillis;
@@ -65,13 +64,12 @@ class Janitor implements Runnable {
         running = false;
     }
 
-    @Override
-    public void run() {
+    @Override public void run() {
         while (running) {
             try {
                 runImpl();
             } catch (Exception e) {
-                logger.error("Error during Janitor run", e);
+                LOGGER.error("Error during Janitor run", e);
             }
         }
 
@@ -80,8 +78,9 @@ class Janitor implements Runnable {
 
     private void runImpl() {
         long next = nextFileLockCheck;
-        if (next > nextFlush)
+        if (next > nextFlush) {
             next = nextFlush;
+        }
 
         long sleep = next - System.currentTimeMillis();
         if (sleep > 0) {
@@ -96,8 +95,9 @@ class Janitor implements Runnable {
             }
         }
 
-        if (!running)
+        if (!running) {
             return;
+        }
 
         long now = System.currentTimeMillis();
         if (now >= nextFileLockCheck) {
@@ -114,8 +114,9 @@ class Janitor implements Runnable {
                 // A GC is required for the mapped buffers to be closed.
                 if (running) {
                     if (db.tooManyFiles() || fileClosures > db.maxOpenFiles / 2) {
-                        if (logger.isDebugEnabled())
-                            logger.debug("Running garbage collection. Files to close: " + fileClosures);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Running garbage collection. Files to close: " + fileClosures);
+                        }
                         System.gc();
                         gc = true;
                         db.openFiles.addAndGet(-fileClosures);
@@ -123,7 +124,7 @@ class Janitor implements Runnable {
                     }
                 }
             } catch (IOException e) {
-                logger.error("Exception during scheduled flush", e);
+                LOGGER.error("Exception during scheduled flush", e);
             }
 
             time = System.currentTimeMillis() - time;
@@ -133,22 +134,24 @@ class Janitor implements Runnable {
                 handler.handle(lastFlushMillis);
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Write queue flush took " + time + " ms");
-                logger.debug("write/s=" + db.getWritesPerSecond() + ", backdateCount=" + db.getBackdateCount()
-                        + ", writeCount=" + db.getWriteCount() + ", openFiles=" + db.getOpenFiles() + ", forcedClose="
-                        + db.getForcedClose());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Write queue flush took " + time + " ms");
+                LOGGER.debug("write/s=" + db.getWritesPerSecond() + ", backdateCount=" + db.getBackdateCount() + ", writeCount=" + db
+                        .getWriteCount() + ", openFiles=" + db.getOpenFiles() + ", forcedClose=" + db.getForcedClose());
             }
 
             // If the time that it took to do the last flush, times 10, is greater than the flush interval, use
-            // the time * 10 as the interval. This prevents the flush from running too often. But, don't let the 
+            // the time * 10 as the interval. This prevents the flush from running too often. But, don't let the
             // sleep time exceed the flush interval * 4.
             time *= 10;
 
-            if (gc || time < flushInterval)
+            if (gc || time < flushInterval) {
                 time = flushInterval;
-            else if (time > flushInterval * 4)
-                time = flushInterval * 4;
+            } else {
+                if (time > flushInterval * 4) {
+                    time = flushInterval * 4;
+                }
+            }
             nextFlush = System.currentTimeMillis() + time;
         }
     }

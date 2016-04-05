@@ -3,7 +3,6 @@ package org.etsdb.util;
 import java.io.File;
 
 public class DirectoryUtils {
-
     public static DirectoryInfo getSize(File file) {
         DirectoryInfo info = new DirectoryInfo();
         getSizeImpl(info, file);
@@ -22,5 +21,8 @@ public class DirectoryUtils {
             info.count += 1;
             info.size += file.length();
         }
+    }
+
+    private DirectoryUtils() {
     }
 }

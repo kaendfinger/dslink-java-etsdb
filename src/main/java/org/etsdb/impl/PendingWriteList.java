@@ -4,21 +4,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PendingWriteList {
+class PendingWriteList {
     private final WriteQueueInfo queueInfo;
     private final List<PendingWrite> list = new ArrayList<>();
     private long expiryTime;
     private int maxSize;
 
-    public PendingWriteList(WriteQueueInfo queueInfo) {
+    PendingWriteList(WriteQueueInfo queueInfo) {
         this.queueInfo = queueInfo;
     }
 
-    public boolean expired(long runtime) {
+    boolean expired(long runtime) {
         return expiryTime != 0 && expiryTime <= runtime;
     }
 
-    public void add(PendingWrite sample) {
+    void add(PendingWrite sample) {
         if (list.isEmpty()) {
             expiryTime = queueInfo.getExpiryTime();
             maxSize = queueInfo.getShardQueueSize();
@@ -29,31 +29,33 @@ public class PendingWriteList {
             int index = Collections.binarySearch(list, sample);
             if (index < 0) {
                 index = -index - 1;
-                if (index == list.size())
+                if (index == list.size()) {
                     list.add(sample);
-                else
+                } else {
                     list.add(index, sample);
-            } else
+                }
+            } else {
                 list.set(index, sample);
+            }
         }
     }
 
-    public void clear() {
+    void clear() {
         if (!list.isEmpty()) {
             list.clear();
             expiryTime = 0;
         }
     }
 
-    public boolean exceeds() {
+    boolean exceeds() {
         return list.size() > maxSize;
     }
 
-    public boolean isEmpty() {
+    boolean isEmpty() {
         return list.isEmpty();
     }
 
-    public List<PendingWrite> getList() {
+    List<PendingWrite> getList() {
         return list;
     }
 }
