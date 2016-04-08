@@ -10,7 +10,7 @@ public class LongQueue implements Cloneable {
         this(128);
     }
 
-    private LongQueue(int initialLength) {
+    public LongQueue(int initialLength) {
         this.queue = new long[initialLength];
     }
 
@@ -40,7 +40,7 @@ public class LongQueue implements Cloneable {
         push(i, 0, i.length);
     }
 
-    private void push(long[] i, int pos, int length) {
+    public void push(long[] i, int pos, int length) {
         if (length == 0) {
             return;
         }
@@ -93,11 +93,11 @@ public class LongQueue implements Cloneable {
         return retval;
     }
 
-    private int pop(long[] buf) {
+    public int pop(long[] buf) {
         return pop(buf, 0, buf.length);
     }
 
-    private int pop(long[] buf, int pos, int length) {
+    public int pop(long[] buf, int pos, int length) {
         length = peek(buf, pos, length);
 
         this.size -= length;
@@ -171,7 +171,7 @@ public class LongQueue implements Cloneable {
         return peek(buf, 0, buf.length);
     }
 
-    private int peek(long[] buf, int pos, int length) {
+    public int peek(long[] buf, int pos, int length) {
         if (length == 0) {
             return 0;
         }
@@ -196,7 +196,7 @@ public class LongQueue implements Cloneable {
         return indexOf(i, 0);
     }
 
-    private int indexOf(long value, int start) {
+    public int indexOf(long value, int start) {
         if (start >= this.size) {
             return -1;
         }
@@ -214,7 +214,7 @@ public class LongQueue implements Cloneable {
         return indexOf(values, 0);
     }
 
-    private int indexOf(long[] values, int start) {
+    public int indexOf(long[] values, int start) {
         if ((values == null) || (values.length == 0)) {
             throw new IllegalArgumentException("cannot search for empty values");
         }
@@ -271,13 +271,13 @@ public class LongQueue implements Cloneable {
 
             clone.queue = this.queue.clone();
             return clone;
-        } catch (CloneNotSupportedException ignored) {
+        } catch (CloneNotSupportedException e) {
         }
         return null;
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         if (this.queue.length == 0) {
             sb.append("[]");
         } else {

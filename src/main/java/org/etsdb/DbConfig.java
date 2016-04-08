@@ -5,7 +5,8 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 public class DbConfig {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DbConfig.class);
+
+    private static final Logger logger = LoggerFactory.getLogger(DbConfig.class);
 
     private boolean addShutdownHook = true;
     private boolean runCorruptionScan = true;
@@ -68,47 +69,38 @@ public class DbConfig {
     private int queueDiscardQueueSize = 1000000;
 
     public void validate() throws ConfigException {
-        if (fileLockCheckInterval <= 0) {
+        if (fileLockCheckInterval <= 0)
             throw new ConfigException("fileLockCheckInterval must be greater than 0");
-        }
 
-        if (flushInterval <= 0) {
+        if (flushInterval <= 0)
             throw new ConfigException("flushInterval must be greater than 0");
-        }
 
         if (flushInterval < 300000) {
-            LOGGER.warn("Flush interval too low, setting it to 5 minutes (300000 ms)");
+            logger.warn("Flush interval too low, setting it to 5 minutes (300000 ms)");
             flushInterval = 300000;
         }
 
-        if (shardStalePeriod < 0) {
+        if (shardStalePeriod < 0)
             throw new ConfigException("shardStalePeriod cannot be negative");
-        }
 
-        if (backdateStartDelay < 0) {
+        if (backdateStartDelay < 0)
             throw new ConfigException("backdateStartDelay cannot be negative");
-        }
 
         if (useWriteQueue) {
-            if (queueExpireMinimum < 0) {
+            if (queueExpireMinimum < 0)
                 throw new ConfigException("queueExpireMinimum cannot be negative");
-            }
 
-            if (queueExpireMaximum < queueExpireMinimum) {
+            if (queueExpireMaximum < queueExpireMinimum)
                 throw new ConfigException("queueExpireMaximum cannot be less than queueExpireMinimum");
-            }
 
-            if (queueShardQueueSizeMinimum <= 0) {
+            if (queueShardQueueSizeMinimum <= 0)
                 throw new ConfigException("queueShardQueueSizeMinimum must be greater than 0 ");
-            }
 
-            if (queueMaxQueueSize < queueShardQueueSizeMinimum) {
+            if (queueMaxQueueSize < queueShardQueueSizeMinimum)
                 throw new ConfigException("queueMaxQueueSize must be greater than queueShardQueueSizeMinimum");
-            }
 
-            if (queueDiscardQueueSize < queueMaxQueueSize) {
+            if (queueDiscardQueueSize < queueMaxQueueSize)
                 throw new ConfigException("queueDiscardQueueSize must be greater than queueMaxQueueSize");
-            }
         }
     }
 

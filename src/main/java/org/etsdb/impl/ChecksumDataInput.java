@@ -24,33 +24,29 @@ class ChecksumDataInput implements ChecksumInput, Closeable {
 
     @Override
     public int read() throws IOException {
-        if (eof) {
+        if (eof)
             return -1;
-        }
 
         int i = delegate.read();
         sum += (byte) i;
-        if (i == -1) {
+        if (i == -1)
             eof = true;
-        }
 
         return i;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        if (eof) {
+        if (eof)
             return -1;
-        }
 
         int count = delegate.read(b, off, len);
         if (count == -1) {
             eof = true;
             sum += (byte) -1;
         } else {
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++)
                 sum += b[i + off];
-            }
         }
 
         return count;

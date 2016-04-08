@@ -7,18 +7,18 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class WriteQueueInfo {
-    final int maxQueueSize;
     final int discardQueueSize;
+    final int expireMinimum;
+    final int expireMaximum;
+    final int shardQueueSizeMinimum;
+    final int shardQueueSizeMaximum;
+    final int maxQueueSize;
+
     final NotifyAtomicInteger queueSize = new NotifyAtomicInteger();
     final AtomicInteger recentDiscards = new AtomicInteger();
     final Random random = new Random();
 
-    private final int expireMinimum;
-    private final int expireMaximum;
-    private final int shardQueueSizeMinimum;
-    private final int shardQueueSizeMaximum;
-
-    WriteQueueInfo(DbConfig config) {
+    public WriteQueueInfo(DbConfig config) {
         expireMinimum = config.getQueueExpireMinimum();
         expireMaximum = config.getQueueExpireMaximum();
         shardQueueSizeMinimum = config.getQueueShardQueueSizeMinimum();
@@ -27,17 +27,15 @@ class WriteQueueInfo {
         discardQueueSize = config.getQueueDiscardQueueSize();
     }
 
-    long getExpiryTime() {
-        if (expireMinimum == expireMaximum) {
+    public long getExpiryTime() {
+        if (expireMinimum == expireMaximum)
             return System.currentTimeMillis() + expireMinimum;
-        }
         return System.currentTimeMillis() + expireMinimum + random.nextInt(expireMaximum - expireMinimum);
     }
 
-    int getShardQueueSize() {
-        if (shardQueueSizeMinimum == shardQueueSizeMaximum) {
+    public int getShardQueueSize() {
+        if (shardQueueSizeMinimum == shardQueueSizeMaximum)
             return shardQueueSizeMinimum;
-        }
         return shardQueueSizeMinimum + random.nextInt(shardQueueSizeMaximum - shardQueueSizeMinimum);
     }
 }

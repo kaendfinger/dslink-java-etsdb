@@ -18,14 +18,17 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class DataShard {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataShard.class.getName());
+
+    private static final Logger logger = LoggerFactory.getLogger(DataShard.class.getName());
 
     private final DatabaseImpl<?> db;
     private final String seriesId;
     private final long shardId;
     private final File dataFile;
     private final File metaFile;
+
     private final PendingWriteList cache;
+
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AtomicInteger metaClosures = new AtomicInteger();
     /**
@@ -53,7 +56,8 @@ class DataShard {
         updateLastAccess();
     }
 
-    static void _writeSample(ChecksumOutputStream out, long tsOffset, byte[] data, int offset, int length) throws IOException {
+    static void _writeSample(ChecksumOutputStream out, long tsOffset, byte[] data, int offset, int length)
+            throws IOException {
         out.write(Utils.SAMPLE_HEADER);
         Utils.write4ByteUnsigned(out, tsOffset);
         Utils.writeCompactInt(out, length);
@@ -82,7 +86,8 @@ class DataShard {
         for (int i = 1; i < Utils.SAMPLE_HEADER.length; i++) {
             b = in.read();
             if (((byte) b) != Utils.SAMPLE_HEADER[i]) {
-                throw new BadRowException("Header error at " + i + ": expected " + Utils.SAMPLE_HEADER[i] + ", got " + b);
+                throw new BadRowException("Header error at " + i + ": expected " + Utils.SAMPLE_HEADER[i] + ", got "
+                        + b);
             }
         }
 
@@ -101,7 +106,8 @@ class DataShard {
             throw new BadRowException("Length error: IOException: " + e.getMessage());
         }
         if (length < 0 || length > Utils.MAX_DATA_LENGTH) {
-            throw new BadRowException("Length error: cannot be negative or exceed " + Utils.MAX_DATA_LENGTH + ": " + length);
+            throw new BadRowException("Length error: cannot be negative or exceed " + Utils.MAX_DATA_LENGTH + ": "
+                    + length);
         }
 
         // Data
@@ -173,8 +179,8 @@ class DataShard {
                     }
                 }
             } else {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Backdate: seriesId=" + seriesId + ", ts=" + ts + ", latestTime=" + latestTime);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Backdate: seriesId=" + seriesId + ", ts=" + ts + ", latestTime=" + latestTime);
                 }
                 db.addBackdate(new Backdate(seriesId, shardId, offset, data, off, len));
             }
@@ -210,9 +216,9 @@ class DataShard {
                     break;
                 }
 
-                if (scanInfo.getOffset() < fromOffset) {
+                if (scanInfo.getOffset() < fromOffset)
                     continue; // Ignore. Before time range
-                } else if (scanInfo.getOffset() >= toOffset) {
+                else if (scanInfo.getOffset() >= toOffset) {
                     break; // After time range. Done.
                 }
                 cb.sample(seriesId, Utils.getTimestamp(shardId, scanInfo.getOffset()), scanInfo.getData());
@@ -241,9 +247,9 @@ class DataShard {
                 for (int i = cache.getList().size() - 1; i >= 0; i--) {
                     p = cache.getList().get(i);
 
-                    if (p.getOffset() >= toOffset) {
+                    if (p.getOffset() >= toOffset)
                         continue; // Ignore. After time range.
-                    } else if (p.getOffset() < fromOffset) {
+                    else if (p.getOffset() < fromOffset) {
                         // Before time range. Because cache rows are always after the file rows, we know that there
                         // will be nothing of interest in the file. To prevent a file read, set the limit to 0.
                         limit = 0;
@@ -279,9 +285,9 @@ class DataShard {
                             break;
                         }
 
-                        if (scanInfo.getOffset() < fromOffset) {
+                        if (scanInfo.getOffset() < fromOffset)
                             continue; // Ignore. Before time range
-                        } else if (scanInfo.getOffset() >= toOffset) {
+                        else if (scanInfo.getOffset() >= toOffset) {
                             break; // After time range. Done.
                         }
                         positions.push(position);
@@ -412,8 +418,8 @@ class DataShard {
         if (!dataFile.exists()) {
             // This could happen if the shard was purged while the backdates were waiting to get written.
             for (Backdate backdate : backdates) {
-                writeImmediate(Utils.getTimestamp(backdate.getShardId(), backdate.getOffset()), backdate.getOffset(), backdate.getData(), 0,
-                        backdate.getData().length);
+                writeImmediate(Utils.getTimestamp(backdate.getShardId(), backdate.getOffset()), backdate.getOffset(),
+                        backdate.getData(), 0, backdate.getData().length);
             }
             db.flushCount.addAndGet(backdates.size());
             dataOut.flush();
@@ -439,8 +445,8 @@ class DataShard {
             readSample(in, scanInfo);
 
             while (true) {
-                // All done.
-                if (scanInfo.isEof() && next == null) {
+                if (scanInfo.isEof() && next == null) // All done.
+                {
                     break;
                 }
 
@@ -489,7 +495,7 @@ class DataShard {
             try {
                 writeCache();
             } catch (IOException e) {
-                LOGGER.warn("Failed to write cache on close", e);
+                logger.warn("Failed to write cache on close", e);
             }
 
             closeFiles();
@@ -525,7 +531,8 @@ class DataShard {
     private void writeCache() throws IOException {
         if (cache != null && !cache.isEmpty()) {
             for (PendingWrite p : cache.getList()) {
-                writeImmediate(Utils.getTimestamp(shardId, p.getOffset()), p.getOffset(), p.getData(), 0, p.getData().length);
+                writeImmediate(Utils.getTimestamp(shardId, p.getOffset()), p.getOffset(), p.getData(), 0,
+                        p.getData().length);
             }
             dataOut.flush();
             db.queueInfo.queueSize.addAndGet(-cache.getList().size());
@@ -540,7 +547,7 @@ class DataShard {
             if (!dataFile.getParentFile().exists()) {
                 if (!dataFile.getParentFile().mkdirs()) {
                     String path = dataFile.getParent();
-                    LOGGER.error("Failed to create dataFile: {}", path);
+                    logger.error("Failed to create dataFile: {}", path);
                 }
             }
             dataOut = new ChecksumOutputStream(new FileOutputStream(dataFile, dataFile.exists()));
@@ -593,7 +600,8 @@ class DataShard {
     private void recreateMetaFile() throws IOException {
         final AtomicLong lastTs = new AtomicLong();
         query(0, Long.MAX_VALUE, Integer.MAX_VALUE, new RawQueryCallback() {
-            @Override public void sample(String seriesId, long ts, ByteArrayBuilder b) {
+            @Override
+            public void sample(String seriesId, long ts, ByteArrayBuilder b) {
                 lastTs.set(ts);
             }
         });

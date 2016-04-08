@@ -17,11 +17,9 @@ import java.util.Random;
  * @author Samuel Grenier
  */
 public class Main {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     private static final Random RANDOM = new Random();
-
-    private Main() {
-    }
 
     public static void main(String[] args) throws Exception {
         String prop = System.getProperty("etsdb.timestamp_bit_shift", "30");
@@ -35,10 +33,10 @@ public class Main {
 
         ByteData bd = new ByteData();
         bd.setValue(new Value(RANDOM.nextInt()));
-        for (int i = 0; i < 10000000; ++i) {
+        for (int i = 0; i < 10000000;) {
             db.write("test", System.currentTimeMillis(), bd);
             bd.getValue().set(RANDOM.nextInt());
-            if (i % 100000 == 0) {
+            if (++i % 100000 == 0) {
                 LOGGER.info("Wrote {} rows", i);
             }
         }

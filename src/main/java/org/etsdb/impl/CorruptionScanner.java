@@ -9,7 +9,8 @@ import java.util.Collections;
 import java.util.List;
 
 class CorruptionScanner {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CorruptionScanner.class.getName());
+
+    private static final Logger logger = LoggerFactory.getLogger(CorruptionScanner.class.getName());
 
     private final DatabaseImpl<?> db;
 
@@ -73,21 +74,21 @@ class CorruptionScanner {
 
             if (data.exists()) {
                 // If the data file exists, then just delete the file
-                LOGGER.warn("Found temp file " + temp + " with existing data file. Deleting.");
+                logger.warn("Found temp file " + temp + " with existing data file. Deleting.");
                 Utils.deleteWithRetry(temp);
             } else if (meta.exists()) {
                 // If the meta file exists, then rename the temp file to data, and delete the meta file so that it gets
                 // recreated.
-                LOGGER.warn("Found temp file " + temp + " without data but with meta file. Moving.");
+                logger.warn("Found temp file " + temp + " without data but with meta file. Moving.");
                 Utils.renameWithRetry(temp, data);
                 Utils.deleteWithRetry(meta);
             } else if (temp.length() > 0) {
                 // A lonely temp file, but with content. Rename to data and see wht the corruption check has to say.
-                LOGGER.warn("Found temp file " + temp + " without data or meta file, with content. Moving.");
+                logger.warn("Found temp file " + temp + " without data or meta file, with content. Moving.");
                 Utils.deleteWithRetry(temp);
             } else {
                 // Otherwise, just delete the temp file.
-                LOGGER.warn("Found temp file " + temp + " without data, meta file, or content. Deleting.");
+                logger.warn("Found temp file " + temp + " without data, meta file, or content. Deleting.");
                 Utils.deleteWithRetry(temp);
             }
         }
@@ -109,7 +110,7 @@ class CorruptionScanner {
             }
 
             if (!found) {
-                LOGGER.warn("Data file without meta file in series " + seriesId + ", shard " + shardId + ".");
+                logger.warn("Data file without meta file in series " + seriesId + ", shard " + shardId + ".");
                 // Don't need to recreate the meta file here. The
                 //                DataShard shard = new DataShard(seriesDir, seriesId, shardId);
                 //                shard.close();
@@ -118,7 +119,7 @@ class CorruptionScanner {
 
         // If there are any files left in the meta list, then they should just be deleted.
         for (File meta : metas) {
-            LOGGER.warn("Meta file without data file at " + meta + ". Deleting file");
+            logger.warn("Meta file without data file at " + meta + ". Deleting file");
             Utils.deleteWithRetry(meta);
         }
 
@@ -149,7 +150,7 @@ class CorruptionScanner {
             // If any corruption was found, delete the meta file so that it gets recreated.
             Utils.deleteWithRetry(new File(data.getParent(), Utils.getShardId(data.getName()) + ".meta"));
 
-            LOGGER.warn("Corruption detected in " + data + " at position " + position);
+            logger.warn("Corruption detected in " + data + " at position " + position);
             fixCorruption(data, position);
         }
     }
@@ -180,7 +181,8 @@ class CorruptionScanner {
         return -1;
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored") private void fixCorruption(File data, long badRowposition) throws IOException {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void fixCorruption(File data, long badRowposition) throws IOException {
         ChecksumInputStream in = null;
         try {
             ScanInfo scanInfo = new ScanInfo();
@@ -240,14 +242,15 @@ class CorruptionScanner {
             return false;
         }
 
-        // No row was read because we normally reached the EOF.
-        if (scanInfo.isEof()) {
+        if (scanInfo.isEof()) // No row was read because we normally reached the EOF.
+        {
             return true;
         }
 
         // ??? Check that the record's ts is greater than 0, greater than the last, and less than the shard max.
         // Verify the checksum.
         return in.checkSum();
+
     }
 
     /**
@@ -264,7 +267,7 @@ class CorruptionScanner {
         FileInputStream in = null;
         FileOutputStream out = null;
 
-        LOGGER.warn("Cutting corrupt data in " + data + " at " + from + ", length " + (to - from));
+        logger.warn("Cutting corrupt data in " + data + " at " + from + ", length " + (to - from));
 
         try {
             in = new FileInputStream(data);
@@ -311,7 +314,8 @@ class CorruptionScanner {
             this.suffix = suffix;
         }
 
-        @Override public boolean accept(File dir, String name) {
+        @Override
+        public boolean accept(File dir, String name) {
             return name.endsWith(suffix);
         }
     }

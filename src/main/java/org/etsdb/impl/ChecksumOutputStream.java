@@ -22,24 +22,26 @@ class ChecksumOutputStream extends OutputStream {
         sum = 0;
     }
 
-    @Override public void write(int b) throws IOException {
+    @Override
+    public void write(int b) throws IOException {
         sum += b;
         delegate.write(b);
     }
 
-    @Override public void write(byte[] b, int off, int len) throws IOException {
-        for (int i = 0; i < len; i++) {
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        for (int i = 0; i < len; i++)
             sum += b[i + off];
-        }
-
         delegate.write(b, off, len);
     }
 
-    @Override public void flush() throws IOException {
+    @Override
+    public void flush() throws IOException {
         delegate.flush();
     }
 
-    @Override public void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         delegate.close();
     }
 }

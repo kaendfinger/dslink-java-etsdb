@@ -2,7 +2,7 @@ package org.etsdb.maint;
 
 import org.etsdb.impl.DatabaseImpl;
 
-abstract class BaseUpgrade {
+abstract public class BaseUpgrade {
     protected DatabaseImpl<?> db;
 
     public void setDb(DatabaseImpl<?> db) {

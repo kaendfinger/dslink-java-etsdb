@@ -9,10 +9,7 @@ public class DatabaseFactory {
         return createDatabase(baseDir, serializer, null);
     }
 
-    private static <T> DatabaseImpl<T> createDatabase(File baseDir, Serializer<T> serializer, DbConfig config) {
+    public static <T> DatabaseImpl<T> createDatabase(File baseDir, Serializer<T> serializer, DbConfig config) {
         return new DatabaseImpl<>(baseDir, serializer, config);
-    }
-
-    private DatabaseFactory() {
     }
 }

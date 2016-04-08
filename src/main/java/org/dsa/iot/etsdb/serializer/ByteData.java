@@ -11,27 +11,32 @@ import org.etsdb.ByteArrayBuilder;
  * @author Samuel Grenier
  */
 public class ByteData extends QueryData {
+
     private Value value;
+
     private byte type;
     private byte[] bytes;
 
-    void setType(byte type) {
+    public void setType(byte type) {
         this.type = type;
     }
 
-    @SuppressFBWarnings("EI_EXPOSE_REP") void setBytes(byte[] bytes) {
+    @SuppressFBWarnings("EI_EXPOSE_REP")
+    public void setBytes(byte[] bytes) {
         this.bytes = bytes;
     }
 
-    @Override public void setValue(Value value) {
+    @Override
+    public void setValue(Value value) {
         this.value = value;
     }
 
-    @Override public Value getValue() {
+    @Override
+    public Value getValue() {
         if (value == null && bytes != null) {
             ByteArrayBuilder b = new ByteArrayBuilder(bytes);
             switch (type) {
-                case ValueSerializer.NUMBER:
+                case ValueSerializer.NUMBER: {
                     type = b.get();
                     switch (type) {
                         case ValueSerializer.BYTE:
@@ -55,31 +60,33 @@ public class ByteData extends QueryData {
                         default:
                             throw new RuntimeException("Unsupported type: " + type);
                     }
-                case ValueSerializer.BOOL:
+                    break;
+                }
+                case ValueSerializer.BOOL: {
                     value = new Value(b.getBoolean());
                     break;
-
-                case ValueSerializer.STRING:
+                }
+                case ValueSerializer.STRING: {
                     value = new Value(b.getString());
                     break;
-
-                case ValueSerializer.MAP:
+                }
+                case ValueSerializer.MAP: {
                     JsonObject obj = new JsonObject(b.getString());
                     value = new Value(obj);
                     break;
-
-                case ValueSerializer.ARRAY:
+                }
+                case ValueSerializer.ARRAY: {
                     JsonArray array = new JsonArray(b.getString());
                     value = new Value(array);
                     break;
-
-                case ValueSerializer.BINARY:
+                }
+                case ValueSerializer.BINARY: {
                     int avail = b.getAvailable();
                     byte[] bytes = new byte[avail];
                     b.get(bytes, 0, avail);
                     value = new Value(bytes);
                     break;
-
+                }
                 default:
                     throw new RuntimeException("Unsupported type: " + type);
             }

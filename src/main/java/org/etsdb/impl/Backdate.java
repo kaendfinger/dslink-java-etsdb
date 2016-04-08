@@ -44,36 +44,25 @@ class Backdate implements Comparable<Backdate> {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
         Backdate backdate = (Backdate) o;
-        if (getShardId() != backdate.getShardId()) {
-            return false;
-        }
-        if (getOffset() != backdate.getOffset()) {
-            return false;
-        }
-        if (getSeriesId() != null ? !getSeriesId().equals(backdate.getSeriesId()) : backdate.getSeriesId() != null) {
-            return false;
-        }
 
+        if (getShardId() != backdate.getShardId()) return false;
+        if (getOffset() != backdate.getOffset()) return false;
+        if (getSeriesId() != null ? !getSeriesId().equals(backdate.getSeriesId()) : backdate.getSeriesId() != null)
+            return false;
         return Arrays.equals(getData(), backdate.getData());
+
     }
 
     @Override
     public int hashCode() {
-        // CHECKSTYLE:OFF
         int result = getSeriesId() != null ? getSeriesId().hashCode() : 0;
         result = 31 * result + (int) (getShardId() ^ (getShardId() >>> 32));
         result = 31 * result + (int) (getOffset() ^ (getOffset() >>> 32));
         result = 31 * result + (getData() != null ? Arrays.hashCode(getData()) : 0);
         return result;
-        // CHECKSTYLE:ON
     }
 }

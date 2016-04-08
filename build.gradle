@@ -19,7 +19,6 @@ configurations {
     provided
 }
 
-
 idea {
     module {
         scopes.PROVIDED.plus += [ configurations.provided ]
@@ -31,13 +30,6 @@ dependencies {
     compile 'org.iot-dsa:historian:0.15.0-SNAPSHOT'
     compile 'org.iot-dsa:commons:0.15.0-SNAPSHOT'
     compile 'org.iot-dsa:dslink:0.15.0-SNAPSHOT'
-    compile 'com.arcbees:checkstyle:1.2'
-}
-
-apply plugin: 'checkstyle'
-checkstyle {
-    configFile = file("${project.rootDir}/checkstyle/checkstyle.xml")
-    toolVersion = '6.17'
 }
 
 compileJava {
