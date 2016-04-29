@@ -109,7 +109,7 @@ public class DbProvider extends DatabaseProvider {
                     watch.unsubscribe();
 
                     String path = node.getName();
-                    path = path.replaceAll("%2F", "/");
+                    path = path.replaceAll("%2F", "/").replaceAll("%2E", ".");
                     DatabaseImpl<ByteData> db = ((Db) database).getDb();
                     db.deleteSeries(path);
                 }
