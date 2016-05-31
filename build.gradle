@@ -6,7 +6,7 @@ apply plugin: 'idea'
 mainClassName = 'org.dsa.iot.etsdb.Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
-version = '0.0.5-SNAPSHOT'
+version = '0.16.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -26,10 +26,10 @@ idea {
 }
 
 dependencies {
-    provided 'com.google.code.findbugs:annotations:3.0.0'
-    compile 'org.iot-dsa:historian:0.15.0'
-    compile 'org.iot-dsa:commons:0.15.0'
-    compile 'org.iot-dsa:dslink:0.15.0'
+    compile 'org.iot-dsa:historian:0.16.0-SNAPSHOT'
+    compile 'org.iot-dsa:commons:0.16.0-SNAPSHOT'
+    compile 'org.iot-dsa:dslink:0.16.0-SNAPSHOT'
+    provided 'com.google.code.findbugs:annotations:3.0.1'
 }
 
 compileJava {
