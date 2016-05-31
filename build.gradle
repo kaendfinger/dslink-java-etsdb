@@ -26,7 +26,6 @@ idea {
 }
 
 dependencies {
-    compile group: 'org.iot-dsa', name: 'dslink', version: '0.16.0-SNAPSHOT'
     compile 'org.iot-dsa:historian:0.16.0-SNAPSHOT'
     compile 'org.iot-dsa:commons:0.16.0-SNAPSHOT'
     compile 'org.iot-dsa:dslink:0.16.0-SNAPSHOT'
