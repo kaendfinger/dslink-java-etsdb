@@ -17,10 +17,12 @@ import org.dsa.iot.historian.database.Database;
 import org.dsa.iot.historian.database.DatabaseProvider;
 import org.dsa.iot.historian.database.Watch;
 import org.dsa.iot.historian.utils.TimeParser;
+import org.etsdb.TypeOverrideTypes;
 import org.etsdb.impl.DatabaseImpl;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 
 /**
  * @author Samuel Grenier
@@ -44,26 +46,26 @@ public class DbProvider extends DatabaseProvider {
     @Override
     public Action createDbAction(Permission perm) {
         Action act = new Action(perm,
-                        new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                Value vPath = event.getParameter("Path", ValueType.STRING);
-                String path = vPath.getString();
+                new Handler<ActionResult>() {
+                    @Override
+                    public void handle(ActionResult event) {
+                        Value vPath = event.getParameter("Path", ValueType.STRING);
+                        String path = vPath.getString();
 
-                String name = StringUtils.encodeName(path);
-                NodeBuilder builder = createDbNode(name, event);
-                builder.setConfig("path", new Value(path));
+                        String name = StringUtils.encodeName(path);
+                        NodeBuilder builder = createDbNode(name, event);
+                        builder.setConfig("path", new Value(path));
 
-                Value vName = event.getParameter("Name");
-                if (vName != null) {
-                    builder.setDisplayName(vName.getString());
-                } else {
-                    builder.setDisplayName(path);
-                }
+                        Value vName = event.getParameter("Name");
+                        if (vName != null) {
+                            builder.setDisplayName(vName.getString());
+                        } else {
+                            builder.setDisplayName(path);
+                        }
 
-                createAndInitDb(builder.build());
-            }
-        });
+                        createAndInitDb(builder.build());
+                    }
+                });
         {
             Parameter p = new Parameter("Name", ValueType.STRING);
             String desc = "Name of the database\n";
@@ -151,5 +153,40 @@ public class DbProvider extends DatabaseProvider {
             b.setAction(a);
             b.build();
         }
+
+        addOverrideTypeAction(node, perm);
+    }
+
+    private void addOverrideTypeAction(final Node node, Permission permission) {
+        NodeBuilder nodeBuilder = node.createChild("overrideType");
+        nodeBuilder.setDisplayName("Override data point type");
+
+        Action action = new Action(permission, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                Value overrideType = event.getParameter("TypeName");
+
+                if (overrideType == null) {
+                    return;
+                }
+
+                String typeAsString = overrideType.getString();
+
+                if (TypeOverrideTypes.NONE == TypeOverrideTypes.fromName(typeAsString)) {
+                    return;
+                }
+
+                node.setValueType(ValueType.toValueType(typeAsString));
+            }
+        });
+
+        Set<String> types = TypeOverrideTypes.buildEnums();
+        Parameter overrideToTypeParameter = new Parameter("TypeName", ValueType.makeEnum(types));
+        overrideToTypeParameter.setDescription("The type the data point type will be overridden to. " +
+                "If None is selected, no override will be done");
+        action.addParameter(overrideToTypeParameter);
+
+        nodeBuilder.setAction(action);
+        nodeBuilder.build();
     }
 }
