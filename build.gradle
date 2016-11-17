@@ -26,9 +26,9 @@ idea {
 }
 
 dependencies {
-    compile 'org.iot-dsa:historian:0.16.0-SNAPSHOT'
-    compile 'org.iot-dsa:commons:0.16.0-SNAPSHOT'
-    compile 'org.iot-dsa:dslink:0.16.0-SNAPSHOT'
+    compile 'org.iot-dsa:historian:0.17.0-SNAPSHOT'
+    compile 'org.iot-dsa:commons:0.17.0-SNAPSHOT'
+    compile 'org.iot-dsa:dslink:0.17.0-SNAPSHOT'
     provided 'com.google.code.findbugs:annotations:3.0.1'
 }
 
