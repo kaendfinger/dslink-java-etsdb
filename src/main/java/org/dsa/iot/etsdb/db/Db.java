@@ -433,7 +433,7 @@ public class Db extends Database {
             b.setConfig("unit", new Value("MiB"));
             final Node node;
             {
-                Node tmp = b.getParent().getChild("dbs");
+                Node tmp = b.getParent().getChild("dbs", false);
                 if (tmp == null) {
                     node = b.getChild();
                 } else {
@@ -465,7 +465,7 @@ public class Db extends Database {
             b.setConfig("unit", new Value("MiB"));
             final Node node;
             {
-                Node tmp = b.getParent().getChild("sa");
+                Node tmp = b.getParent().getChild("sa", false);
                 if (tmp == null) {
                     node = b.getChild();
                 } else {
