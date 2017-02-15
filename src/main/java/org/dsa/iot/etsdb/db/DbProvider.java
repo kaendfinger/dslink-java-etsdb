@@ -111,7 +111,10 @@ public class DbProvider extends DatabaseProvider {
                     watch.unsubscribe();
 
                     String path = node.getName();
-                    path = path.replaceAll("%2F", "/").replaceAll("%2E", ".");
+                    Value useNewEncodingMethod = watch.getNode().getConfig(Watch.USE_NEW_ENCODING_METHOD_CONFIG_NAME);
+                    if (useNewEncodingMethod == null || !useNewEncodingMethod.getBool()) {
+                        path = path.replaceAll("%2F", "/").replaceAll("%2E", ".");
+                    }
                     DatabaseImpl<ByteData> db = ((Db) database).getDb();
                     db.deleteSeries(path);
                 }
@@ -136,7 +139,8 @@ public class DbProvider extends DatabaseProvider {
                     }
 
                     String path = node.getName();
-                    path = path.replaceAll("%2F", "/");
+                    path = StringUtils.decodeName(path);
+
                     DatabaseImpl<ByteData> db = ((Db) database).getDb();
                     db.delete(path, fromTs, toTs);
                 }
