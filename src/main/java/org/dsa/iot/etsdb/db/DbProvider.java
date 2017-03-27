@@ -114,6 +114,8 @@ public class DbProvider extends DatabaseProvider {
                     Value useNewEncodingMethod = watch.getNode().getConfig(Watch.USE_NEW_ENCODING_METHOD_CONFIG_NAME);
                     if (useNewEncodingMethod == null || !useNewEncodingMethod.getBool()) {
                         path = path.replaceAll("%2F", "/").replaceAll("%2E", ".");
+                    } else {
+                        path = watch.getPath();
                     }
                     DatabaseImpl<ByteData> db = ((Db) database).getDb();
                     db.deleteSeries(path);
@@ -159,6 +161,13 @@ public class DbProvider extends DatabaseProvider {
         }
 
         addOverrideTypeAction(node, perm);
+    }
+
+    @Override
+    public void deleteRange(Watch watch, long fromTs, long toTs) {
+        final Database database = watch.getGroup().getDb();
+        DatabaseImpl<ByteData> db = ((Db) database).getDb();
+        db.delete(watch.getPath(), fromTs, toTs);
     }
 
     private void addOverrideTypeAction(final Node node, Permission permission) {
