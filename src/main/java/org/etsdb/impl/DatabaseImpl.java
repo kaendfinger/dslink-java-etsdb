@@ -5,7 +5,6 @@ import org.dsa.iot.dslink.util.handler.Handler;
 import org.dsa.iot.etsdb.utils.atomic.NotifyAtomicInteger;
 import org.dsa.iot.etsdb.utils.atomic.NotifyAtomicLong;
 import org.etsdb.*;
-import org.etsdb.maint.DBUpgrade;
 import org.etsdb.util.DirectoryUtils;
 import org.etsdb.util.EventHistogram;
 import org.slf4j.Logger;
@@ -96,10 +95,6 @@ public class DatabaseImpl<T> implements Database<T> {
                 logger.error("Failed to create baseDir: {}", baseDir.getParent());
             }
         }
-
-        // Check for upgrades.
-        DBUpgrade upgrade = new DBUpgrade(this);
-        upgrade.checkForUpgrade();
 
         logger.info("Database started at {}", baseDir.getAbsolutePath());
 
