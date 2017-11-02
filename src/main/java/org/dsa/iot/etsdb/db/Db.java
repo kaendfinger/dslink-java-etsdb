@@ -75,6 +75,11 @@ public class Db extends Database {
 
     @Override
     public void write(String path, Value value, long ts) {
+        if (db == null) {
+            LOGGER.error("Tried to write a value to the database before it was initialized.");
+            return;
+        }
+        
         ByteData d = new ByteData();
         d.setValue(value);
         db.write(path, ts, d);
